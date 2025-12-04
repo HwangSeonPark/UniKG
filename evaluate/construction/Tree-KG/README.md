@@ -12,16 +12,7 @@ Tree-KG의 ER/PC/MEC/RS 흐름의 평가 스크립트다.
 
 > RS는 OpenRouter API 키가 없으면 계산할 수 없다. 키가 없을 때는 `None`으로 표기된다.
 
-## 실행 방법
-```
-python evaluate/construction/Tree-KG/main.py \
-  --dataset /home/hyyang/my_workspace/KGC/evaluate/construction/references \
-  --api-key $OPENROUTER_API_KEY
-```
 
-- `--dataset` 디렉터리는 `pred.txt`, `golden.txt`, `sen.txt`을 포함해야 한다.
-- 개별 파일 경로를 사용하려면 `--pred`, `--gold`, `--text` 옵션으로 덮어쓴다.
-- API 키를 CLI로 넘기지 않으면 `OPENROUTER_API_KEY` 환경변수를 사용한다.
 
 ## 코드 구조
 - `metrics/*.py` : ER/PC/MEC/RS 원천 로직

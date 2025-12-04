@@ -9,7 +9,7 @@ from evaluate.construction.common.graph.utils import return_eq_node, return_eq_e
 def get_graph_match_accuracy(pred_graphs, gold_graphs):
 	"""
 
-	두 그래프가 라벨 동치 조건으로 동형(isomorphic)인지 판별하여 비율 계산.
+	두 그래프가 라벨 동치 조건으로 동형인지 판별하여 비율 계산
 	- 노드/엣지 라벨 모두 동일해야 동형으로 간주
 	"""
 	matchs = 0

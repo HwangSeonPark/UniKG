@@ -78,7 +78,7 @@ def _fbem(txt: str) -> np.ndarray:
 
 def _check_api() -> bool:
     """
-    OpenRouter 임베딩 API를 선검증하고 키가 없으면 fallback 모드 안내.
+    OpenRouter 임베딩 API를 선검증
     """
     global _KEY_VALID, _API_CHECK_DONE, _FALLBACK_MODE_NOTIFIED
 
@@ -109,7 +109,7 @@ def _check_api() -> bool:
         _KEY_VALID = False
         if not _FALLBACK_MODE_NOTIFIED:
             _FALLBACK_MODE_NOTIFIED = True
-            print("\n[정보] fallback 임베딩 모드를 사용합니다.\n")
+            print("\n[정보] voyagei 임베딩 모드를 사용합니다.\n")
         return False
 
 
