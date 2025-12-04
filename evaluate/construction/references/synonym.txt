@@ -1,0 +1,2 @@
+[['Trane', 'placed', 'Swords,_Dublin']]
+[['Ciudad_Ayala', 'metropolitanarea', '1777539'], ['Ciudad_Ayala', 'symbolize', '"City Manager"'],  ['Ciudad_Ayala', 'belong to', 'Morelos']]

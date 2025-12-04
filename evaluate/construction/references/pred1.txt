@@ -1,0 +1,16 @@
+[['Trane', 'locatedIn', 'Swords,_Dublin']]
+[['Ciudad_Ayala', 'isPartOf', 'Morelos'], ['Ciudad_Ayala', 'populationDensity', '1604.0'], ['Ciudad_Ayala', 'population', '1777539'], ['Ciudad_Ayala', 'utcOffset', '-6'], ['Ciudad_Ayala', 'governmentType', 'council-manager government'], ['Ciudad_Ayala', 'leaderTitle', 'City Manager']]
+[['ALCO_RS-3', 'length', '17068.8'], ['ALCO_RS-3', 'transmission', 'diesel-electric']]
+[['Alan_B._Miller_Hall', 'location', 'Virginia'], ['Alan_B._Miller_Hall', 'country', 'USA'], ['Alan_B._Miller_Hall', 'architect', 'Robert_A.M._Stern'], ['Alan_B._Miller_Hall', 'address', '101 Ukrop Way'], ['Alan_B._Miller_Hall', 'currentTenants', 'Mason School of Business']]
+[['Liselotte_Grschebina', 'birthPlace', 'Karlsruhe'], ['Liselotte_Grschebina', 'deathPlace', 'Israel'], ['Israel', 'ethnicGroup', 'Arabs']]
+[['Agremiação_Sportiva_Arapiraquense', 'manager', 'Vica'], ['Agremiação_Sportiva_Arapiraquense', 'numberOfMembers', '17000'], ['Agremiação_Sportiva_Arapiraquense', 'league', 'Campeonato Brasileiro Série C'], ['Campeonato_Brasileiro_Série_C', 'country', 'Brazil']]
+[['Bananaman', 'firstAired', '1983-03-10'], ['Bananaman', 'creator', 'Steve Bright'], ['Bananaman', 'broadcastedBy', 'BBC']]
+[['11th_Mississippi_Infantry_Monument', 'established', '2000'], ['11th_Mississippi_Infantry_Monument', 'location', 'Gettysburg'], ['Gettysburg', 'isPartOf', 'Pennsylvania'], ['Pennsylvania', 'isPartOf', 'Adams County'], ['Adams_County', 'country', 'USA'], ['11th_Mississippi_Infantry_Monument', 'category', 'Contributing Property'], ['Cumberland_County', 'north', 'Adams County']]
+[['France', 'governmentType', 'unitary state']]
+[['College_of_William_and_Mary', 'owns', 'Alan B. Miller Hall'], ['Alan_B._Miller_Hall', 'location', 'Virginia'], ['Alan_B._Miller_Hall', 'address', '101 Ukrop Way'], ['Alan_B._Miller_Hall', 'currentTenants', 'Mason School of Business']]
+[['Al_Asad_Airbase', 'operatedBy', 'United States Air Force'], ['Al_Asad_Airbase', 'runwayLength', '3990']]
+[['Alan_Shepard', 'birthPlace', 'New Hampshire'], ['Alan_Shepard', 'birthDate', '1923-11-18'], ['Alan_Shepard', 'deathPlace', 'California'], ['Alan_Shepard', 'nationality', 'United States'], ['Alan_Shepard', 'selectedByNASA', '1959']]
+[['Morelos', 'type', 'state'], ['Morelos', 'country', 'Mexico']]
+[['Nie_Haisheng', 'occupation', 'fighter pilot'], ['Nie_Haisheng', 'nationality', "People's Republic of China"], ['Nie_Haisheng', 'birthPlace', 'Zaoyang'], ['Zaoyang', 'isPartOf', 'Hubei'], ['Nie_Haisheng', 'birthDate', '1964-10-13']]
+
+

@@ -1,0 +1,2 @@
+[['Trane', 'location', 'Swords,_Dublin']]
+[['Ciudad_Ayala', 'populationMetro', '1777539'], ['Ciudad_Ayala', 'leaderTitle', '"City Manager"'], ['Ciudad_Ayala', 'isPartOf', 'Morelos']]

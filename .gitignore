@@ -1,0 +1,13 @@
+.env
+*.pyc
+baseline/
+datasets/
+result/
+experiments/
+result_xmls/
+*.log
+run_edc.sh
+run_graphjudge.sh
+run_kg_gen.sh
+
+__pycache__/
