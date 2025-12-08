@@ -108,6 +108,7 @@ def getRefs(filepath):
         allreftriples.append(entryreftriples)
 
     newreflist = []
+    eidx = 0  # 빈 문자열을 고유 토큰으로 치환하기 위한 인덱스
     for entry in allreftriples:
         newtriples = []
         for triple in entry:
@@ -119,7 +120,12 @@ def getRefs(filepath):
             manualmodified = re.search(r"^(.*?)(\s\((.*?)\))$", adjusttriple[-1])
             if manualmodified:
                 adjusttriple[-1] = manualmodified.group(1)
-                newtriple = " | ".join(adjusttriple)
+            # 빈 문자열 오답 처리: 각 요소가 빈칸이면 고유 토큰으로 치환
+            for i in range(len(adjusttriple)):
+                if not adjusttriple[i].strip():
+                    adjusttriple[i] = f'<emp_{eidx}>'
+                    eidx += 1
+            newtriple = " | ".join(adjusttriple)
             newtriples.append(newtriple)
         newreflist.append(newtriples)
 
@@ -141,6 +147,7 @@ def getCands(filepath):
         allcandtriples.append(entrycandtriples)
 
     newcandlist = []
+    eidx = 0  # 빈 문자열을 고유 토큰으로 치환하기 위한 인덱스
     for entry in allcandtriples:
         newtriples = []
         for triple in entry:
@@ -152,7 +159,12 @@ def getCands(filepath):
             manualmodified = re.search(r"^(.*?)(\s\((.*?)\))$", adjusttriple[-1])
             if manualmodified:
                 adjusttriple[-1] = manualmodified.group(1)
-                newtriple = " | ".join(adjusttriple)
+            # 빈 문자열 오답 처리: 각 요소가 빈칸이면 고유 토큰으로 치환
+            for i in range(len(adjusttriple)):
+                if not adjusttriple[i].strip():
+                    adjusttriple[i] = f'<emp_{eidx}>'
+                    eidx += 1
+            newtriple = " | ".join(adjusttriple)
             newtriples.append(newtriple)
         newcandlist.append(newtriples)
 

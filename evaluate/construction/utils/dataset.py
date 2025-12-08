@@ -27,26 +27,30 @@ def resolve_dataset_paths(
     gold_path: Optional[str],
     text_path: Optional[str],
     require_text: bool,
-) -> Tuple[str, str, Optional[str]]:
+    require_gold: bool = True,
+) -> Tuple[str, Optional[str], Optional[str]]:
     """
     데이터셋 디렉터리와 개별 경로 인자를 조합해 실제 파일 경로를 반환한다.
-    - pred_path, gold_path는 필수
+    - pred_path는 필수
+    - gold_path는 require_gold가 True면 필수, False면 선택 사항
     - text_path는 require_text가 True면 필수, False면 선택 사항
     - dataset_dir가 지정되면 상대 경로로 파일명만 지정 가능
     """
 
     base = Path(dataset_dir).expanduser().resolve() if dataset_dir else None
 
-    def _resolve(candidate: Optional[str], label: str) -> Path:
+    def _resolve(candidate: Optional[str], label: str, required: bool = True) -> Optional[Path]:
         if not candidate:
-            if base:
-                available = [f.name for f in base.iterdir() if f.is_file()]
-                raise ValueError(
-                    f"{label} path is required. "
-                    f"Use --{label} to specify. "
-                    f"Available files in {base}: {', '.join(sorted(available))}"
-                )
-            raise ValueError(f"{label} path is required. Use --{label} to specify.")
+            if required:
+                if base:
+                    available = [f.name for f in base.iterdir() if f.is_file()]
+                    raise ValueError(
+                        f"{label} path is required. "
+                        f"Use --{label} to specify. "
+                        f"Available files in {base}: {', '.join(sorted(available))}"
+                    )
+                raise ValueError(f"{label} path is required. Use --{label} to specify.")
+            return None
         
         candidate_path = Path(candidate).expanduser()
         if candidate_path.is_absolute():
@@ -57,19 +61,19 @@ def resolve_dataset_paths(
         
         return _ensure_path(candidate_path.resolve(), label)
 
-    pred = _resolve(pred_path, "pred")
-    gold = _resolve(gold_path, "gold")
+    pred = _resolve(pred_path, "pred", required=True)
+    gold = _resolve(gold_path, "gold", required=require_gold)
 
     text: Optional[Path] = None
     if require_text or text_path:
         try:
-            text = _resolve(text_path, "text")
+            text = _resolve(text_path, "text", required=require_text)
         except (ValueError, FileNotFoundError) as e:
             if require_text:
                 raise
             text = None
 
-    return str(pred), str(gold), str(text) if text else None
+    return str(pred), str(gold) if gold else None, str(text) if text else None
 
 
 def infer_dataset_dir(explicit: Optional[str]) -> str:

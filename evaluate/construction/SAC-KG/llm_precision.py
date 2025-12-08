@@ -1,3 +1,4 @@
+import time
 from typing import Dict, List, Tuple, Optional
 from evaluate.construction.common.graph.io import load_lines
 from evaluate.construction.common.graph.common import _llm
@@ -64,6 +65,8 @@ def llm_precision(pred_path: str, text_path: str, verbose: bool = True, api_key:
         
         for triple_idx, triple in enumerate(triples):
             total_pred += 1
+            if triple_idx > 0:
+                time.sleep(3.0)
             correct, reason = _evaluate_triple_from_text(triple, text, api_key)
             
             if verbose:

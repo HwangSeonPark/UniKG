@@ -14,9 +14,9 @@ except Exception:
     pass
 
 
-_KEY = os.getenv('OPENROUTER_API_KEY')
+_KEY = os.getenv('GEMINI_API_KEY')
 _FB = not _KEY  # 키가 없으면 fallback 모드
-_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
+_GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 _EMB_URL = "https://openrouter.ai/api/v1/embeddings"
 _ECCH: Dict[str, np.ndarray] = {}
 _KEY_VALID = None  # 키 유효성 캐시: None(미검증), True(유효), False(무효)
@@ -43,23 +43,42 @@ def _ent(trips: List[List[str]]) -> Set[str]:
 
 def _llm(msg: str, temp: float = 0.1, key: Optional[str] = None) -> str:
     """
-    LLM API 호출 (키 없으면 에러 발생)
+    LLM API 호출 (Gemini API 사용, 키 없으면 에러 발생)
     """
     k = key or _KEY
     if not k:
         raise ValueError("NO_KEY")
+    
+    model_name = "gemini-2.5-flash"
+    url = f"{_GEMINI_BASE_URL}/{model_name}:generateContent?key={k}"
+    
     hdrs = {
-        "Authorization": f"Bearer {k}",
         "Content-Type": "application/json"
     }
     body = {
-        "model": "mistralai/mistral-7b-instruct:free",
-        "messages": [{"role": "user", "content": msg}],
-        "temperature": temp
+        "contents": [{
+            "parts": [{
+                "text": msg
+            }]
+        }],
+        "generationConfig": {
+            "temperature": temp
+        }
     }
-    resp = requests.post(_CHAT_URL, headers=hdrs, json=body, timeout=10)
-    resp.raise_for_status()
-    return resp.json()['choices'][0]['message']['content']
+    resp = requests.post(url, headers=hdrs, json=body, timeout=30)
+    if not resp.ok:
+        try:
+            error_data = resp.json()
+            if 'error' in error_data:
+                error_msg = error_data['error'].get('message', str(error_data))
+                raise ValueError(f"Gemini API 오류 ({resp.status_code}): {error_msg}")
+        except:
+            pass
+        resp.raise_for_status()
+    result = resp.json()
+    if 'candidates' not in result or len(result['candidates']) == 0:
+        raise ValueError(f"Gemini API 응답 오류: {result}")
+    return result['candidates'][0]['content']['parts'][0]['text']
 
 
 def _fbem(txt: str) -> np.ndarray:

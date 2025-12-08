@@ -1,0 +1,83 @@
+Knowledge Graph Construction Evaluation Suite
+Pred file: /home/hyyang/my_workspace/KGC/evaluate/construction/references/pred_paragraph.txt
+Text file: /home/hyyang/my_workspace/KGC/evaluate/construction/references/paragraph.txt
+--------------------------------------------------------------------------------
+
+[SAC-KG]
+----------------------------------------
+SAC-KG LLM Precision
+================================================================================
+
+[text 1]
+source text: Rice, a monocot, is normally grown as an annual plant, although in tropical areas it can survive as ...
+extracted triples: 8 triples
+
+  triple 1: ['Rice', 'type', 'monocot']
+  LLM decision: correct
+  reason: The entities "Rice" and "monocot" are both explicitly present in the text. The phrase "Rice, a monocot," directly states that Rice belongs to the type "monocot," supporting the "type" relation. The triple is factually correct according to the text.
+
+YES
+
+  triple 2: ['Rice', 'growth habit', 'annual plant']
+  LLM decision: correct
+  reason: The entities "Rice" and "annual plant" are both explicitly present in the text. The text states, "Rice... is normally grown as an annual plant," which directly supports the relation "growth habit" between Rice and annual plant. The triple is factually correct based on the text, as it describes the normal growth habit of rice.
+
+YES
+
+  triple 3: ['Rice', 'growth habit', 'perennial (in tropical areas)']
+  LLM decision: correct
+  reason: The head entity "Rice" is clearly present in the text. The text states "although in tropical areas it can survive as a perennial," which directly supports the tail entity "perennial (in tropical areas)" and describes a "growth habit" of rice. Therefore, the relation is supported, and the triple is factually correct based on the text.
+
+YES
+
+  triple 4: ['Rice', 'ability', 'produce ratoon crop for up to 30 years']
+  LLM decision: correct
+  reason: The head entity "Rice" is clearly present in the text. The tail entity "produce ratoon crop for up to 30 years" is also directly stated in the text: "Rice... can produce a ratoon crop for up to 30 years." The word "can" explicitly indicates an "ability," which matches the extracted relation. The triple is factually correct according to the provided text.
+
+YES
+
+  triple 5: ['Rice', 'well-suited to', 'countries and regions with low labor costs and high rainfall']
+  LLM decision: correct
+  reason: The extracted triple is correct.
+
+1.  **Entities Present:** Both "Rice" (head entity) and "countries and regions with low labor costs and high rainfall" (tail entity) are explicitly present in the text.
+2.  **Relation Supported:** The text states, "Rice cultivation is well-suited to countries and regions with low labor costs and high rainfall". While the text uses "Rice cultivation" as the subject, the meaning conveyed is that "Rice" (the crop) is well-suited to be grown in these regions. The relation "well-suited to" is directly stated in the text.
+3.  **Factually Correct based on Text:** The text directly supports the fact that these conditions are suitable for rice (cultivation).
+
+YES
+
+  triple 6: ['Rice', 'cultivation requirements', 'labor-intensive']
+  LLM decision: correct
+  reason: The entities "Rice" and "labor-intensive" are both present in the text. The text states, "Rice cultivation is well-suited to countries and regions with low labor costs and high rainfall, as it is labor-intensive to cultivate and requires ample water." This directly supports the relation that being "labor-intensive" is a characteristic or requirement of "Rice cultivation." The triple is factually correct according to the text.
+
+YES
+
+  triple 7: ['Rice', 'cultivation requirements', 'ample water']
+  LLM decision: correct
+  reason: The head entity "Rice" is present in the text. The tail entity "ample water" is also present. The text explicitly states, "Rice cultivation... requires ample water," directly supporting the "cultivation requirements" relation between "Rice" and "ample water." The triple is factually correct based on the provided text.
+
+YES
+
+  triple 8: ['Rice', 'cultivation adaptability', 'can be grown practically anywhere']
+  LLM decision: correct
+  reason: The head entity "Rice" is clearly present. The tail entity "can be grown practically anywhere" is an exact phrase found in the text: "However, rice can be grown practically anywhere...". The relation "cultivation adaptability" accurately describes the fact that rice can be grown in a wide variety of locations, as stated in the text. The triple is factually correct based on the provided text.
+
+YES
+
+→ text 1 result: 8/8 correct
+
+--------------------------------------------------------------------------------
+
+final result
+total text: 1
+total predicted triples: 8
+total correct triples: 8
+Precision: 1.0000
+average number of recalls per text (Number of Recalls): 8.00
+  Precision: 1.0000
+  Number of Recalls: 8.0000
+테스트 완료.
+평가 결과
+입력:
+문단: Rice에 대한 설명 텍스트
+예측 트리플: 8개

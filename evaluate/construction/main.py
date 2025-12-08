@@ -62,7 +62,7 @@ def _run_sac(pred_path: str, gold_path: str, text_path: Optional[str], api_key: 
     if not text_path:
         raise ValueError("SAC-KG 평가는 원문 텍스트 경로가 필요합니다.")
     llm_mod = load_module("SAC-KG", "llm_precision")
-    scores = llm_mod.llm_precision(pred_path, text_path, verbose=False, api_key=api_key)
+    scores = llm_mod.llm_precision(pred_path, text_path, verbose=True, api_key=api_key)
     return {
         "Precision": scores["precision"],
         "Number of Recalls": scores["number_of_recalls"],
@@ -126,10 +126,10 @@ def _parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="선행연구별 KG 메트릭 실행기")
     ap.add_argument("--dataset", default=None, help="데이터셋 디렉터리 (선택 사항, 파일명만 지정 시 사용)")
     ap.add_argument("--pred", required=True, help="예측 트리플 파일 경로 (필수)")
-    ap.add_argument("--gold", required=True, help="정답 트리플 파일 경로 (필수)")
+    ap.add_argument("--gold", default=None, help="정답 트리플 파일 경로 (SAC-KG 제외한 모델에서 필수)")
     ap.add_argument("--text", default=None, help="원문 텍스트 파일 경로 (SAC-KG 등에서 필요)")
     ap.add_argument("--models", default="all", help="실행할 모델 (콤마 구분, all 사용 가능)")
-    ap.add_argument("--api-key", default=os.getenv("OPENROUTER_API_KEY"), help="LLM 메트릭용 OpenRouter API 키")
+    ap.add_argument("--api-key", default=os.getenv("GEMINI_API_KEY"), help="LLM 메트릭용 Gemini API 키")
     return ap.parse_args()
 
 
@@ -170,10 +170,14 @@ def _print_value(name: str, value: Any, indent: int = 0) -> None:
 
 
 def _run_model(spec: ModelSpec, dataset_dir: Optional[str], args: argparse.Namespace) -> Dict[str, Any]:
+    require_gold = spec.key != "sac"
+    if require_gold and not args.gold:
+        raise ValueError(f"{spec.label} 평가는 --gold 경로가 필요합니다.")
+    
     pred_path, gold_path, text_path = resolve_dataset_paths(
-        dataset_dir, args.pred, args.gold, args.text, require_text=spec.require_text
+        dataset_dir, args.pred, args.gold, args.text, require_text=spec.require_text, require_gold=require_gold
     )
-    return spec.handler(pred_path, gold_path, text_path, args.api_key)
+    return spec.handler(pred_path, gold_path or "", text_path, args.api_key)
 
 
 def main() -> None:
@@ -182,7 +186,8 @@ def main() -> None:
 
     print("Knowledge Graph Construction Evaluation Suite")
     print(f"Pred file: {args.pred}")
-    print(f"Gold file: {args.gold}")
+    if args.gold:
+        print(f"Gold file: {args.gold}")
     if args.text:
         print(f"Text file: {args.text}")
     if args.dataset:
