@@ -11,3 +11,8 @@ run_graphjudge.sh
 run_kg_gen.sh
 
 __pycache__/
+
+# Allow tracking of kg-gen assets
+!evaluate/kg-gen/experiments/
+!evaluate/kg-gen/data/
+!evaluate/kg-gen/tests/data/
