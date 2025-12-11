@@ -269,7 +269,7 @@ def run_vllm_inference(
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"[INFO] Device = {device}")
 
-    # 🔹 Llama 3.1 Instruct 토크나이저 로드
+    # Llama 3.1 Instruct 토크나이저 로드
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # vLLM 엔진 초기화
