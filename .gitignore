@@ -16,3 +16,6 @@ __pycache__/
 !evaluate/kg-gen/experiments/
 !evaluate/kg-gen/data/
 !evaluate/kg-gen/tests/data/
+
+
+evaluate/construction/logs

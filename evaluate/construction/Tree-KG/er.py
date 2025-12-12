@@ -1,5 +1,5 @@
 from typing import List
-from evaluate.construction.common.graph.common import _ent, _top5, _map
+from .common import _ent, _top5, _map
 
 
 def er(gt: List[List[str]], pd: List[List[str]], key: str = None) -> float:

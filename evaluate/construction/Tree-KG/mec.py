@@ -1,6 +1,6 @@
 from typing import List, Dict
 from collections import defaultdict
-from evaluate.construction.common.graph.common import _ent, _top5, _map, _bfs
+from .common import _ent, _top5, _map, _bfs
 
 
 def mec(gt: List[List[str]], pd: List[List[str]], key: str = None) -> float:

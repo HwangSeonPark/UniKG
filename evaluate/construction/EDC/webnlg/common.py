@@ -27,15 +27,22 @@ def _try_indent(tree):
 
 
 def convert_to_xml(result_path: str, gold_path: str, max_length_diff=None) -> Tuple[str, str]:
-    normalized_path = os.path.normpath(os.path.abspath(result_path))
-    parent_dir = os.path.basename(os.path.dirname(normalized_path))
-    if parent_dir:
-        output_dir = parent_dir
-    else:
-        output_dir = os.path.splitext(os.path.basename(normalized_path))[0] or "output"
-    os.makedirs(f"./result_xmls/{output_dir}", exist_ok=True)
-    pred_xml_path = os.path.join(f"./result_xmls/{output_dir}", f"pred.xml")
-    ref_xml_path = os.path.join(f"./result_xmls/{output_dir}", f"ref.xml")
+    # 예측 파일 경로에서 데이터셋 이름 추출
+    # 경로 예시: .../extract_LLM/CaRB/mistral/triples.txt
+    npath = os.path.normpath(os.path.abspath(result_path))
+    parts = npath.split(os.sep)
+    
+    # 데이터셋 이름 찾기 (extract_LLM 다음 디렉터리)
+    dset = "Eval"  # 기본값
+    for i, p in enumerate(parts):
+        if p == "extract_LLM" and i + 1 < len(parts):
+            dset = parts[i + 1]
+            break
+    
+    # 데이터셋별 디렉터리 생성
+    os.makedirs(f"./result_xmls/{dset}", exist_ok=True)
+    pred_xml_path = os.path.join(f"./result_xmls/{dset}", f"pred.xml")
+    ref_xml_path = os.path.join(f"./result_xmls/{dset}", f"ref.xml")
 
     pred_triplets = [l.strip() for l in open(result_path, "r").readlines()]
     gold_triplets = [l.strip() for l in open(gold_path, "r").readlines()]
@@ -43,18 +50,33 @@ def convert_to_xml(result_path: str, gold_path: str, max_length_diff=None) -> Tu
     collected_pred_triplets = []
     collected_gold_triplets = []
 
-    for idx, triplets in enumerate(pred_triplets):
+    # 라인 단위 매칭을 위해 양쪽 모두 파싱 성공한 경우만 추가
+    for idx in range(min(len(pred_triplets), len(gold_triplets))):
         try:
-            evaled_triplets = ast.literal_eval(triplets)
-            for triplet in evaled_triplets:
-                if len(triplet) != 3:
+            # pred 파싱 시도
+            pred_eval = ast.literal_eval(pred_triplets[idx])
+            # 트리플 검증
+            for trip in pred_eval:
+                if len(trip) != 3:
                     raise Exception
-                for element in triplet:
-                    if not isinstance(element, str):
+                for elem in trip:
+                    if not isinstance(elem, str):
                         raise Exception
-            collected_pred_triplets.append(evaled_triplets)
-            collected_gold_triplets.append(ast.literal_eval(gold_triplets[idx]))
+            
+            # gold 파싱 시도
+            gold_eval = ast.literal_eval(gold_triplets[idx])
+            for trip in gold_eval:
+                if len(trip) != 3:
+                    raise Exception
+                for elem in trip:
+                    if not isinstance(elem, str):
+                        raise Exception
+            
+            # 양쪽 모두 성공 시 추가
+            collected_pred_triplets.append(pred_eval)
+            collected_gold_triplets.append(gold_eval)
         except Exception:
+            # 파싱 오류 시 해당 라인 건너뛰기 (인덱스 유지)
             pass
 
     assert len(collected_pred_triplets) == len(collected_gold_triplets)
@@ -503,10 +525,35 @@ def evaluaterefcand(reference, candidate):
 
 
 def calculateAllScores(newreflist, newcandlist):
+    """모든 샘플에 대해 트리플 매칭 점수 계산"""
+    import time
+    try:
+        from evaluate.construction.common import logger as log
+    except:
+        log = None
+    
     totalsemevallist = []
     totalsemevallistpertag = []
+    
+    ntot = len(newcandlist)
+    tstr = time.time()
+    if log:
+        log.info(f"[EDC] 총 {ntot}개 샘플 평가 시작")
 
     for idx, candidate in enumerate(newcandlist):
+        # 상세 로그
+        tcur = time.time() - tstr
+        tavg = tcur / (idx + 1) if idx > 0 else 0
+        tlft = tavg * (ntot - idx - 1)
+        pct = int(((idx + 1) / ntot) * 100)
+        
+        if log:
+            log.info(f"[EDC] 샘플 {idx+1}/{ntot} ({pct}%) | 경과: {tcur:.1f}s | 남음: {tlft:.1f}s")
+            log.info(f"  예측: {len(newcandlist[idx])}개 | 정답: {len(newreflist[idx])}개")
+            if len(newcandlist[idx]) > 0 and len(newreflist[idx]) > 0:
+                log.info(f"  예측[0]: {newcandlist[idx][0][:70]}")
+                log.info(f"  정답[0]: {newreflist[idx][0][:70]}")
+        
         if len(newcandlist[idx]) != len(newreflist[idx]):
             differencebetween = abs(len(newcandlist[idx]) - len(newreflist[idx]))
             differencelist = [""] * differencebetween
@@ -515,13 +562,18 @@ def calculateAllScores(newreflist, newcandlist):
             else:
                 newreflist[idx] = newreflist[idx] + differencelist
 
-    for idx, candidate in enumerate(newcandlist):
         candidatesemeval = []
         candidatesemevalpertag = []
-        for triple in candidate:
+        ncand = len(candidate)
+        nref = len(newreflist[idx])
+        
+        for cidx, triple in enumerate(candidate):
+            if log and ncand > 5 and cidx % max(1, ncand // 5) == 0:
+                log.info(f"    예측트리플 {cidx+1}/{ncand} 비교 중...")
+            
             triplesemeval = []
             triplesemevalpertag = []
-            for reference in newreflist[idx]:
+            for ridx, reference in enumerate(newreflist[idx]):
                 results, results_per_tag = evaluaterefcand(reference, triple)
                 triplesemeval.append(results)
                 triplesemevalpertag.append(results_per_tag)
@@ -529,38 +581,76 @@ def calculateAllScores(newreflist, newcandlist):
             candidatesemevalpertag.append(triplesemevalpertag)
         totalsemevallist.append(candidatesemeval)
         totalsemevallistpertag.append(candidatesemevalpertag)
-
+    
+    print(f"  [EDC] 평가 완료: {ntot}개 샘플")
+    if log:
+        log.info(f"[EDC] calculateAllScores 완료, calculateSystemScore 시작")
     return totalsemevallist, totalsemevallistpertag
 
 
 def calculateSystemScore(totalsemevallist, totalsemevallistpertag, newreflist, newcandlist):
+    """시스템 점수 계산 (최적 정렬 찾기)"""
+    import time
+    try:
+        from evaluate.construction.common import logger as log
+    except:
+        log = None
+    
     selectedsemevallist = []
     selectedsemevallistpertag = []
     selectedalignment = []
     selectedscores = []
+    
+    tstr = time.time()
+    ntot = len(newcandlist)
+    if log:
+        log.info(f"[EDC] calculateSystemScore 시작: {ntot}개 샘플")
 
     for idx, candidate in enumerate(newcandlist):
-        if len(newcandlist[idx]) > len(newreflist[idx]):
-            choosecands = list(
-                itertools.permutations([x[0] for x in enumerate(totalsemevallist[idx])], len(totalsemevallist[idx][0]))
-            )
-            choosecands = set([tuple(sorted(i)) for i in choosecands])
-            choosecands = list(map(list, choosecands))
+        if log and idx % max(1, ntot // 10) == 0:
+            tcur = time.time() - tstr
+            tavg = tcur / (idx + 1) if idx > 0 else 0
+            tlft = tavg * (ntot - idx - 1)
+            log.info(f"[EDC-Score] 샘플 {idx+1}/{ntot} | 경과: {tcur:.1f}s | 남음: {tlft:.1f}s")
+        # 빈 리스트 처리
+        if len(newcandlist[idx]) == 0 or len(newreflist[idx]) == 0:
+            continue
+        if len(totalsemevallist[idx]) == 0 or len(totalsemevallist[idx][0]) == 0:
+            continue
+        
+        # 트리플 수 제한: 8개 초과 시 간단 매칭만 수행 (조합 폭발 방지)
+        ncand = len(newcandlist[idx])
+        nref = len(newreflist[idx])
+        MAX_PERM = 8  # 8! = 40,320
+        
+        if ncand > MAX_PERM or nref > MAX_PERM:
+            # 단순 1:1 순차 매칭만 수행 (O(n))
+            nmin = min(ncand, nref)
+            choosecands = [list(range(nmin))]
+            choosescore = [list(range(nmin))]
+            combilist = [(choosecands[0], choosescore[0])]
         else:
-            choosecands = [list(range(len(newcandlist[idx])))]
+            if len(newcandlist[idx]) > len(newreflist[idx]):
+                choosecands = list(
+                    itertools.permutations([x[0] for x in enumerate(totalsemevallist[idx])], len(totalsemevallist[idx][0]))
+                )
+                choosecands = set([tuple(sorted(i)) for i in choosecands])
+                choosecands = list(map(list, choosecands))
+            else:
+                choosecands = [list(range(len(newcandlist[idx])))]
 
-        if len(newcandlist[idx]) > len(newreflist[idx]):
-            choosescore = list(
-                itertools.permutations([x[0] for x in enumerate(totalsemevallist[idx][0])], len(newreflist[idx]))
-            )
-            choosescore = [list(x) for x in choosescore]
-        else:
-            choosescore = list(
-                itertools.permutations([x[0] for x in enumerate(totalsemevallist[idx][0])], len(newcandlist[idx]))
-            )
-            choosescore = [list(x) for x in choosescore]
+            if len(newcandlist[idx]) > len(newreflist[idx]):
+                choosescore = list(
+                    itertools.permutations([x[0] for x in enumerate(totalsemevallist[idx][0])], len(newreflist[idx]))
+                )
+                choosescore = [list(x) for x in choosescore]
+            else:
+                choosescore = list(
+                    itertools.permutations([x[0] for x in enumerate(totalsemevallist[idx][0])], len(newcandlist[idx]))
+                )
+                choosescore = [list(x) for x in choosescore]
 
-        combilist = list(itertools.product(choosecands, choosescore))
+            combilist = list(itertools.product(choosecands, choosescore))
         totaldict = {"totalscore": 0}
 
         for combination in combilist:
@@ -570,19 +660,25 @@ def calculateSystemScore(totalsemevallist, totalsemevallistpertag, newreflist, n
             collectedsemevalpertag = []
 
             for zc_idx, zc in enumerate(zipcombi):
-                collectedscores = totalsemevallist[idx][zc[0]][zc[1]]
-                f1score = statistics.mean(
-                    [
-                        collectedscores["ent_type"]["f1"],
-                        collectedscores["partial"]["f1"],
-                        collectedscores["strict"]["f1"],
-                        collectedscores["exact"]["f1"],
-                    ]
-                )
-                combiscore += f1score
-                collectedsemeval.append(collectedscores)
-                assert combination[0][zc_idx] == zc[0] and combination[1][zc_idx] == zc[1]
-                collectedsemevalpertag.append(totalsemevallistpertag[idx][zc[0]][zc[1]])
+                # 인덱스 범위 검증
+                try:
+                    collectedscores = totalsemevallist[idx][zc[0]][zc[1]]
+                    f1score = statistics.mean(
+                        [
+                            collectedscores["ent_type"]["f1"],
+                            collectedscores["partial"]["f1"],
+                            collectedscores["strict"]["f1"],
+                            collectedscores["exact"]["f1"],
+                        ]
+                    )
+                    combiscore += f1score
+                    collectedsemeval.append(collectedscores)
+                    assert combination[0][zc_idx] == zc[0] and combination[1][zc_idx] == zc[1]
+                    collectedsemevalpertag.append(totalsemevallistpertag[idx][zc[0]][zc[1]])
+                except (IndexError, KeyError) as e:
+                    # 인덱스 오류 시 해당 조합 건너뛰기
+                    combiscore = -1
+                    break
 
             if (combiscore > totaldict["totalscore"]) or (len(totaldict) == 1):
                 totaldict = {

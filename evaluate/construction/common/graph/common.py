@@ -17,13 +17,13 @@ except Exception:
 _KEY = os.getenv('GEMINI_API_KEY')
 _FB = not _KEY  # 키가 없으면 fallback 모드
 _GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
-_EMB_URL = "https://openrouter.ai/api/v1/embeddings"
+
 _ECCH: Dict[str, np.ndarray] = {}
 _KEY_VALID = None  # 키 유효성 캐시: None(미검증), True(유효), False(무효)
 _FALLBACK_MODE_NOTIFIED = False  # fallback 전환 알림 여부
 _API_CHECK_DONE = False  # API 연결 테스트 완료 여부
-# 기본 임베딩 모델(환경변수로 오버라이드 가능)
-_MOD = os.getenv("OPENROUTER_EMBED_MODEL", "voyageai/voyage-3")
+
+
 
 
 def _ent(trips: List[List[str]]) -> Set[str]:
@@ -95,75 +95,6 @@ def _fbem(txt: str) -> np.ndarray:
     return vec
 
 
-def _check_api() -> bool:
-    """
-    OpenRouter 임베딩 API를 선검증
-    """
-    global _KEY_VALID, _API_CHECK_DONE, _FALLBACK_MODE_NOTIFIED
-
-    if _API_CHECK_DONE:
-        return _KEY_VALID is True
-
-    _API_CHECK_DONE = True
-
-    if _FB:
-        _KEY_VALID = False
-        if not _FALLBACK_MODE_NOTIFIED:
-            _FALLBACK_MODE_NOTIFIED = True
-            print("API key is not set")
-            sys.exit(1)
-        return False
-
-    try:
-        hdrs = {
-            "Authorization": f"Bearer {_KEY}",
-            "Content-Type": "application/json"
-        }
-        body = {"model": _MOD, "input": "test"}
-        resp = requests.post(_EMB_URL, headers=hdrs, json=body, timeout=2.0)
-        resp.raise_for_status()
-        _KEY_VALID = True
-        return True
-    except Exception:
-        _KEY_VALID = False
-        if not _FALLBACK_MODE_NOTIFIED:
-            _FALLBACK_MODE_NOTIFIED = True
-            print("\n[정보] voyagei 임베딩 모드를 사용합니다.\n")
-        return False
-
-
-def _emb(txt: str) -> np.ndarray:
-
-    # 캐시된 임베딩 반환
-    if txt in _ECCH:
-        return _ECCH[txt]
-    
-    # 최초 호출 시 API 연결 테스트
-    _check_api()
-    
-    # fallback 모드 사용
-    if _KEY_VALID is False:
-        vec = _fbem(txt)
-        _ECCH[txt] = vec
-        return vec
-    
-    # API 호출 (키가 유효한 경우에만)
-    try:
-        hdrs = {
-            "Authorization": f"Bearer {_KEY}",
-            "Content-Type": "application/json"
-        }
-        body = {"model": _MOD, "input": txt}
-        resp = requests.post(_EMB_URL, headers=hdrs, json=body, timeout=3.0)
-        resp.raise_for_status()
-        vec = np.array(resp.json()['data'][0]['embedding'])
-        _ECCH[txt] = vec
-        return vec
-    except Exception:
-        # API 실패 시 fallback 사용
-        vec = _fbem(txt)
-        _ECCH[txt] = vec
-        return vec
 
 
 def _cos(v1: np.ndarray, v2: np.ndarray) -> float:

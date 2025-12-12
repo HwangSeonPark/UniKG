@@ -8,12 +8,27 @@ from evaluate.construction.common.graph.utils import return_eq_node, return_eq_e
 
 def get_graph_match_accuracy(pred_graphs, gold_graphs):
 	"""
-
 	두 그래프가 라벨 동치 조건으로 동형인지 판별하여 비율 계산
 	- 노드/엣지 라벨 모두 동일해야 동형으로 간주
 	"""
+	import time
+	try:
+		from evaluate.construction.common import logger as log
+	except:
+		log = None
+	
+	ntot = len(pred_graphs)
+	tstr = time.time()
+	if log:
+		log.info(f"[Graph-F1] 총 {ntot}개 그래프 동형 검사 시작")
+	
 	matchs = 0
-	for pred, gold in zip(pred_graphs, gold_graphs):
+	for idx, (pred, gold) in enumerate(zip(pred_graphs, gold_graphs)):
+		if log and idx % max(1, ntot // 20) == 0:
+			tcur = time.time() - tstr
+			tavg = tcur / (idx + 1) if idx > 0 else 0
+			tlft = tavg * (ntot - idx - 1)
+			log.info(f"[Graph-F1] 샘플 {idx+1}/{ntot} | 경과: {tcur:.1f}s | 남음: {tlft:.1f}s")
 		g1 = nx.DiGraph()
 		g2 = nx.DiGraph()
 
@@ -49,7 +64,10 @@ def get_graph_match_accuracy(pred_graphs, gold_graphs):
 		# 노드/엣지 레이블 동치 조건 모두 적용
 		if nx.is_isomorphic(g1, g2, node_match=return_eq_node, edge_match=return_eq_edge):
 			matchs += 1
+	
 	acc = matchs/len(pred_graphs)
+	if log:
+		log.info(f"[Graph-F1] 동형 검사 완료: {matchs}/{ntot} 일치 (정확도: {acc:.4f})")
 	return acc
 
 

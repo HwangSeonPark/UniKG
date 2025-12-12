@@ -37,11 +37,31 @@ def g_bleu(pred_path: str, gold_path: str) -> dict:
 	pred_edges = split_to_edges(pred_graphs)
 	gold_tokens, pred_tokens = get_tokens(gold_edges, pred_edges)
 
+	import time
+	try:
+		from evaluate.construction.common import logger as log
+	except:
+		log = None
+	
 	precisions_bleu = []
 	recalls_bleu = []
 	f1s_bleu = []
+	
+	ntot = len(gold_tokens)
+	tstr = time.time()
+	if log:
+		log.info(f"[G-BLEU] 총 {ntot}개 샘플 평가 시작")
 
 	for i in range(len(gold_tokens)):
+		# 상세 로그
+		tcur = time.time() - tstr
+		tavg = tcur / (i + 1) if i > 0 else 0
+		tlft = tavg * (ntot - i - 1)
+		pct = int(((i + 1) / ntot) * 100)
+		
+		if log and (i % max(1, ntot // 20) == 0 or i < 3):
+			log.info(f"[G-BLEU] 샘플 {i+1}/{ntot} ({pct}%) | 경과: {tcur:.1f}s | 남음: {tlft:.1f}s")
+		
 		# BLEU 점수 행렬 계산 (원본과 동일한 smoothing 적용)
 		score_bleu = np.zeros((len(pred_tokens[i]), len(gold_tokens[i])))
 		for p_idx in range(len(pred_tokens[i])):
@@ -55,6 +75,8 @@ def g_bleu(pred_path: str, gold_path: str) -> dict:
 		precisions_bleu.append(p)
 		recalls_bleu.append(r)
 		f1s_bleu.append(f)
+	
+	print(f"  [G-BLEU] 평가 완료: {ntot}개 샘플")
 
 	n = len(gold_graphs) if len(gold_graphs) > 0 else 1
 	return {

@@ -1,7 +1,7 @@
 import json
 import re
 from typing import List, Optional
-from evaluate.construction.common.graph.common import _llm
+from .common import _llm
 
 
 def rs(pd: List[List[str]], key: str = None) -> float:

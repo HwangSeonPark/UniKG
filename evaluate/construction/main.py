@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, List, Optional
 from evaluate.construction.common.graph.io import load_flat
 from evaluate.construction.utils.dataset import resolve_dataset_paths
 from evaluate.construction.utils.importing import load_module
+from evaluate.construction.common import logger as log
 
 
 @dataclass(frozen=True)
@@ -23,19 +24,23 @@ class ModelSpec:
 def _run_tree_kg(pred_path: str, gold_path: str, text_path: Optional[str], api_key: Optional[str]) -> Dict[str, Any]:
     gt = load_flat(gold_path)
     pd = load_flat(pred_path)
-    er_mod = load_module("Tree-KG", "er")
-    pc_mod = load_module("Tree-KG", "pc")
-    mec_mod = load_module("Tree-KG", "mec")
-    rs_mod = load_module("Tree-KG", "rs")
-
+    
+    # 통합 평가 (임베딩 자동 최적화)
+    eval_mod = load_module("Tree-KG", "eval_all")
+    res = eval_mod.eval(gt, pd, key=api_key, prep=True)
+    
+    # 결과 포맷팅
     results: Dict[str, Any] = {
-        "Entity Recall (ER)": er_mod.er(gt, pd, key=api_key),
-        "Precision (PC)": pc_mod.pc(gt, pd, key=api_key),
-        "Mapping-based Edge Connectivity (MEC)": mec_mod.mec(gt, pd, key=api_key),
+        "Entity Recall (ER)": res.get("er", 0.0),
+        "Precision (PC)": res.get("pc", 0.0),
+        "F1 Score (F1)": res.get("f1", 0.0),
+        "Mapping-based Edge Connectivity (MEC)": res.get("mec", 0.0),
     }
-
-    rs_score = rs_mod.rs(pd, key=api_key)
-    results["Relation Strength (RS)"] = rs_score
+    
+    # RS는 키 없으면 None
+    if "rs" in res:
+        results["Relation Strength (RS)"] = res["rs"]
+    
     return results
 
 
@@ -130,6 +135,7 @@ def _parse_args() -> argparse.Namespace:
     ap.add_argument("--text", default=None, help="원문 텍스트 파일 경로 (SAC-KG 등에서 필요)")
     ap.add_argument("--models", default="all", help="실행할 모델 (콤마 구분, all 사용 가능)")
     ap.add_argument("--api-key", default=os.getenv("GEMINI_API_KEY"), help="LLM 메트릭용 Gemini API 키")
+    ap.add_argument("--log", default=None, help="로그 파일 경로 (선택, 미지정 시 logs/ 디렉터리에 자동 생성)")
     return ap.parse_args()
 
 
@@ -169,6 +175,41 @@ def _print_value(name: str, value: Any, indent: int = 0) -> None:
         print(f"{pad}{name}: {display}")
 
 
+def _prep_emb(models: List[ModelSpec], args: argparse.Namespace) -> None:
+    """
+    평가 전에 임베딩 사전 로드 (효율성 향상)
+    - bert-base-uncased 사용 메트릭: GraphJudge, PiVe, Tree-KG
+    - 모델 조합에 따라 최적화
+    """
+    mkeys = {m.key for m in models}
+    need_emb = {"tree", "graphjudge", "pive"} & mkeys
+    
+    # 임베딩 필요한 메트릭이 없으면 스킵
+    if not need_emb:
+        log.info("임베딩 사전 로드 불필요 (임베딩 사용 메트릭 없음)")
+        return
+    
+    # Tree-KG용 엔티티 사전 로드
+    if "tree" in need_emb and args.gold:
+        try:
+            log.step("임베딩 사전 로드", "Tree-KG 엔티티 추출 및 임베딩")
+            gt = load_flat(args.gold)
+            pd = load_flat(args.pred)
+            
+            # 엔티티 개수 추정
+            from evaluate.construction.common.preload import _exte
+            gtes = _exte(gt)
+            pdes = _exte(pd)
+            ntot = len(gtes | pdes)
+            log.est(ntot, "개 엔티티")
+            
+            prep_mod = load_module("common", "preload")
+            prep_mod.prep_tree(gt, pd)
+            log.done("임베딩 사전 로드", f"{ntot}개 엔티티 완료")
+        except Exception as e:
+            log.info(f"임베딩 사전 로드 실패: {e}")
+
+
 def _run_model(spec: ModelSpec, dataset_dir: Optional[str], args: argparse.Namespace) -> Dict[str, Any]:
     require_gold = spec.key != "sac"
     if require_gold and not args.gold:
@@ -180,26 +221,192 @@ def _run_model(spec: ModelSpec, dataset_dir: Optional[str], args: argparse.Names
     return spec.handler(pred_path, gold_path or "", text_path, args.api_key)
 
 
+def _extr(res: Dict[str, Any]) -> Dict[str, float]:
+    """
+    결과에서 최종 결과표용 값 추출
+    
+    Returns:
+        지정 순서에 맞춘 결과 딕셔너리
+    """
+    out = {}
+    
+    # GraphJudge 결과 추출 (precision이 accuracy 역할)
+    if "G-BERTScore" in res:
+        gbs = res["G-BERTScore"]
+        out["G-BERTScore (Accuracy)"] = gbs.get("precision", 0.0)
+        out["G-BERTScore (Recall)"] = gbs.get("recall", 0.0)
+        out["G-BERTScore (F1)"] = gbs.get("f1", 0.0)
+    
+    if "G-BLEU" in res:
+        gbl = res["G-BLEU"]
+        out["G-BLEU (Accuracy)"] = gbl.get("precision", 0.0)
+        out["G-BLEU (Recall)"] = gbl.get("recall", 0.0)
+        out["G-BLEU (F1)"] = gbl.get("f1", 0.0)
+    
+    if "G-ROUGE" in res:
+        grg = res["G-ROUGE"]
+        out["G-ROUGE (Accuracy)"] = grg.get("precision", 0.0)
+        out["G-ROUGE (Recall)"] = grg.get("recall", 0.0)
+        out["G-ROUGE (F1)"] = grg.get("f1", 0.0)
+    
+    # PiVe 결과 추출
+    if "Triple Match" in res:
+        tm = res["Triple Match"]
+        out["Triple Match (T-Recall)"] = tm.get("T-Recall", 0.0)
+        out["Triple Match (T-Precision)"] = tm.get("T-Precision", 0.0)
+        out["Triple Match F1 (T-F1)"] = tm.get("T-F1", 0.0)
+    
+    if "Graph Match" in res:
+        gm = res["Graph Match"]
+        out["Graph Match (G-Recall)"] = gm.get("G-Recall", 0.0)
+        out["Graph Match (G-Precision)"] = gm.get("G-Precision", 0.0)
+        out["Graph Match F1 (G-F1)"] = gm.get("G-F1", 0.0)
+    
+    if "G-BERTScore (G-BS)" in res:
+        gbs2 = res["G-BERTScore (G-BS)"]
+        out["G-BERTScore (G-BS)"] = gbs2.get("precision", 0.0)
+    
+    if "Graph Edit Distance (GED)" in res:
+        out["Graph Edit Distance (GED)"] = res["Graph Edit Distance (GED)"]
+    
+    # EDC 결과 추출
+    if "Partial" in res:
+        prt = res["Partial"]
+        out["Partial (Precision)"] = prt.get("precision", 0.0)
+        out["Partial (Recall)"] = prt.get("recall", 0.0)
+        out["Partial (F1)"] = prt.get("f1", 0.0)
+    
+    if "Strict" in res:
+        srt = res["Strict"]
+        out["Strict (Precision)"] = srt.get("precision", 0.0)
+        out["Strict (Recall)"] = srt.get("recall", 0.0)
+        out["Strict (F1)"] = srt.get("f1", 0.0)
+    
+    if "Exact" in res:
+        ext = res["Exact"]
+        out["Exact (Precision)"] = ext.get("precision", 0.0)
+        out["Exact (Recall)"] = ext.get("recall", 0.0)
+        out["Exact (F1)"] = ext.get("f1", 0.0)
+    
+    if "Exact Triple" in res:
+        et = res["Exact Triple"]
+        out["Exact Triple (Precision)"] = et.get("precision", 0.0)
+        out["Exact Triple (Recall)"] = et.get("recall", 0.0)
+        out["Exact Triple (F1)"] = et.get("f1", 0.0)
+    
+    return out
+
+
+def _tbl(data: Dict[str, float]):
+    """
+    최종 결과표 출력
+    
+    Args:
+        data: 지표별 값
+    """
+    # 지정된 순서
+    cols = [
+        "G-BERTScore (Accuracy)",
+        "G-BERTScore (Recall)",
+        "G-BERTScore (F1)",
+        "G-BLEU (Accuracy)",
+        "G-BLEU (Recall)",
+        "G-BLEU (F1)",
+        "G-ROUGE (Accuracy)",
+        "G-ROUGE (Recall)",
+        "G-ROUGE (F1)",
+        "Triple Match (T-Recall)",
+        "Triple Match (T-Precision)",
+        "Triple Match F1 (T-F1)",
+        "Graph Match (G-Recall)",
+        "Graph Match (G-Precision)",
+        "Graph Match F1 (G-F1)",
+        "G-BERTScore (G-BS)",
+        "Graph Edit Distance (GED)",
+        "Partial (Precision)",
+        "Partial (Recall)",
+        "Partial (F1)",
+        "Strict (Precision)",
+        "Strict (Recall)",
+        "Strict (F1)",
+        "Exact (Precision)",
+        "Exact (Recall)",
+        "Exact (F1)",
+        "Exact Triple (Precision)",
+        "Exact Triple (Recall)",
+        "Exact Triple (F1)",
+    ]
+    
+    log.info("\n" + "="*120)
+    log.info("최종 결과표")
+    log.info("="*120)
+    
+    # 헤더 출력
+    hdr = "\t".join(cols)
+    log.info(hdr)
+    log.info("-"*120)
+    
+    # 데이터 출력
+    vals = []
+    for col in cols:
+        if col in data:
+            vals.append(f"{data[col]:.4f}")
+        else:
+            vals.append("N/A")
+    
+    row = "\t".join(vals)
+    log.info(row)
+    log.info("="*120)
+
+
 def main() -> None:
     args = _parse_args()
-    models = _select_models(args.models)
-
-    print("Knowledge Graph Construction Evaluation Suite")
-    print(f"Pred file: {args.pred}")
-    if args.gold:
-        print(f"Gold file: {args.gold}")
-    if args.text:
-        print(f"Text file: {args.text}")
-    if args.dataset:
-        print(f"Dataset dir: {args.dataset}")
-    print("-" * 80)
-
-    for spec in models:
-        print(f"\n[{spec.label}]")
-        print("-" * 40)
-        results = _run_model(spec, args.dataset, args)
-        for key, value in results.items():
-            _print_value(key, value, indent=2)
+    
+    # 로거 초기화
+    lgr = log.init(args.log)
+    
+    try:
+        models = _select_models(args.models)
+        
+        log.info("="*80)
+        log.info("Knowledge Graph Construction Evaluation Suite")
+        log.info(f"Pred file: {args.pred}")
+        if args.gold:
+            log.info(f"Gold file: {args.gold}")
+        if args.text:
+            log.info(f"Text file: {args.text}")
+        if args.dataset:
+            log.info(f"Dataset dir: {args.dataset}")
+        log.info(f"평가 메트릭: {', '.join([m.label for m in models])}")
+        log.info("="*80)
+        
+        # 임베딩 사전 로드 최적화
+        _prep_emb(models, args)
+        
+        # 전체 결과 저장
+        all_r = {}
+        
+        # 각 메트릭 실행
+        for spec in models:
+            log.step(f"{spec.label} 평가", "시작")
+            results = _run_model(spec, args.dataset, args)
+            
+            # 결과 출력
+            for key, value in results.items():
+                log.res(key, value)
+            
+            # 전체 결과에 병합
+            all_r.update(results)
+            
+            log.done(f"{spec.label} 평가", "완료")
+        
+        # 최종 결과표 출력
+        fdata = _extr(all_r)
+        _tbl(fdata)
+        
+    finally:
+        # 로거 종료
+        lgr.close()
 
 
 if __name__ == "__main__":
