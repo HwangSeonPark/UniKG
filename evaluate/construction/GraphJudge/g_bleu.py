@@ -8,9 +8,6 @@ from evaluate.construction.common.graph.io import load_lines_safe
 
 
 def _scores(cost_matrix: np.ndarray) -> Tuple[float, float, float]:
-	"""
-	헝가리안 알고리즘으로 엣지 매칭을 수행하여 정밀도/재현율/F1을 계산
-	"""
 	row_ind, col_ind = linear_sum_assignment(cost_matrix, maximize=True)
 	precision = float(cost_matrix[row_ind, col_ind].sum()) / float(cost_matrix.shape[0]) if cost_matrix.shape[0] > 0 else 0.0
 	recall = float(cost_matrix[row_ind, col_ind].sum()) / float(cost_matrix.shape[1]) if cost_matrix.shape[1] > 0 else 0.0
@@ -53,7 +50,6 @@ def g_bleu(pred_path: str, gold_path: str) -> dict:
 		log.info(f"[G-BLEU] 총 {ntot}개 샘플 평가 시작")
 
 	for i in range(len(gold_tokens)):
-		# 상세 로그
 		tcur = time.time() - tstr
 		tavg = tcur / (i + 1) if i > 0 else 0
 		tlft = tavg * (ntot - i - 1)
@@ -62,7 +58,6 @@ def g_bleu(pred_path: str, gold_path: str) -> dict:
 		if log and (i % max(1, ntot // 20) == 0 or i < 3):
 			log.info(f"[G-BLEU] 샘플 {i+1}/{ntot} ({pct}%) | 경과: {tcur:.1f}s | 남음: {tlft:.1f}s")
 		
-		# BLEU 점수 행렬 계산 (원본과 동일한 smoothing 적용)
 		score_bleu = np.zeros((len(pred_tokens[i]), len(gold_tokens[i])))
 		for p_idx in range(len(pred_tokens[i])):
 			for g_idx in range(len(gold_tokens[i])):

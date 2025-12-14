@@ -32,30 +32,41 @@ async def call_api(prompt, model_info, max_retries=5):
     name = model_info.get("name", "")
     sys = get_sys(name)
     
+    # api_client.py (call_api 안의 OpenAI 모델인 경우 블록만 수정)
+
     # OpenAI 모델인 경우
     if model_info.get("provider") == "openai":
         key = "openai"
-        
+
         if key not in _clients:
             api = model_info.get("api_key") or os.getenv("OPENAI_API_KEY")
             _clients[key] = AsyncOpenAI(api_key=api)
-        
+
         for retry in range(max_retries):
             try:
-                res = await _clients[key].chat.completions.create(
-                    model=name,
-                    messages=[
+                # 한국어 주석:
+                # gpt-5 계열은 max_tokens 대신 max_completion_tokens를 요구함. [web:150][web:165]
+                par = {
+                    "model": name,
+                    "messages": [
                         {"role": "system", "content": sys},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.1,
-                    max_tokens=2048
-                )
+                        {"role": "user", "content": prompt},
+                    ]
+                }
+
+                if "gpt-5" in name.lower():
+                    par["max_completion_tokens"] = 2048
+                else:
+                    par["max_tokens"] = 2048
+
+                res = await _clients[key].chat.completions.create(**par)
                 return res.choices[0].message.content
-            except Exception as e:
+
+            except Exception:
                 if retry == max_retries - 1:
                     raise
                 await asyncio.sleep(2 ** retry)
+
     
     # 로컬 vLLM 서버인 경우
     else:
@@ -75,7 +86,7 @@ async def call_api(prompt, model_info, max_retries=5):
                         {"role": "system", "content": sys},
                         {"role": "user", "content": prompt}
                     ],
-                    temperature=0.1,
+                    temperature=0.0,
                     max_tokens=2048
                 )
                 return res.choices[0].message.content

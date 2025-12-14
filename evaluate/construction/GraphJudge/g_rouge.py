@@ -8,10 +8,6 @@ from evaluate.construction.common.graph.io import load_lines_safe
 
 
 def _scores(cost_matrix: np.ndarray) -> Tuple[float, float, float]:
-	"""
-	헝가리안 알고리즘으로 엣지 매칭을 수행하여 정밀도/재현율/F1을 계산
- 
-	"""
 	row_ind, col_ind = linear_sum_assignment(cost_matrix, maximize=True)
 	precision = float(cost_matrix[row_ind, col_ind].sum()) / float(cost_matrix.shape[0]) if cost_matrix.shape[0] > 0 else 0.0
 	recall = float(cost_matrix[row_ind, col_ind].sum()) / float(cost_matrix.shape[1]) if cost_matrix.shape[1] > 0 else 0.0

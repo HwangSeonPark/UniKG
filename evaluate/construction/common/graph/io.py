@@ -9,7 +9,7 @@ def _clean_line(line: str) -> str:
     괄호로 감싸진 주석 (예: (Assuming ...), (Note: ...)) 제거
     """
     # 괄호로 감싸진 주석 제거 (예: (Assuming ...), (Note: ...))
-    line = re.sub(r'\s*\([^)]*\)\s*$', '', line)
+    # line = re.sub(r'\s*\([^)]*\)\s*$', '', line)
     # 따옴표 오류 수정 (예: "text1" word "text2" -> "text1 word text2")
     # 리스트 내부에서 발생하는 패턴: ", "text1" word "text2"]
     line = re.sub(r'",\s*"([^"]+)"\s+([a-zA-Z]+)\s+"([^"]+)"\]', r'", "\1 \2 \3"]', line)

@@ -15,10 +15,7 @@ def modify_graph(original_graph):
 	return modified_graph
 
 
-def get_tokens(gold_edges: List[List[str]], pred_edges: List[List[str]]) -> Tuple[List[List[List[str]]], List[List[List[str]]]]:
-	"""
-	그래프의 엣지 문자열 리스트를 spaCy로 토큰화
-	"""
+def get_tokens(gold_edges, pred_edges):
 	nlp = English()
 	tokenizer = Tokenizer(nlp.vocab, infix_finditer=re.compile(r'''[;]''').finditer)
 
@@ -39,22 +36,10 @@ def get_tokens(gold_edges: List[List[str]], pred_edges: List[List[str]]) -> Tupl
 	return gold_tokens, pred_tokens
 
 
-def split_to_edges(graphs: List[List[List[str]]]) -> List[List[str]]:
-	"""
-	각 트리플을 ';'로 연결한 엣지 문자열 리스트 생성
-	빈 문자열이나 공백만 있는 요소는 'NULL'로 대체
-	"""
+def split_to_edges(graphs):
 	pgrph = []
 	for graph in graphs:
-		edges = []
-		for trip in graph:
-			# 빈 문자열 또는 공백만 있는 요소를 'NULL'로 대체
-			norm = []
-			for elem in trip:
-				e = str(elem).strip()
-				norm.append(e if e else 'NULL')
-			edges.append(";".join(norm).lower())
-		pgrph.append(edges)
+		pgrph.append([";".join(str(triple)).lower().strip() for triple in graph])
 	return pgrph
 
 

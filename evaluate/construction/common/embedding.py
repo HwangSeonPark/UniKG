@@ -53,7 +53,7 @@ def _lmod(mname: str):
     모델 로드 (캐시 사용)
     
     Args:
-        mname: 모델명 ('bert-base-uncased', 'all-MiniLM-L6-v2' 등)
+        mname: 모델명 ('bert-base-uncased', )
     
     Returns:
         모델 인스턴스 또는 None

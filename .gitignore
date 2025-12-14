@@ -9,7 +9,7 @@ result_xmls/
 run_edc.sh
 run_graphjudge.sh
 run_kg_gen.sh
-
+*.out
 __pycache__/
 
 # Allow tracking of kg-gen assets

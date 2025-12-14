@@ -41,7 +41,7 @@ def _ent(trips: List[List[str]]) -> Set[str]:
     return ents
 
 
-def _llm(msg: str, temp: float = 0.1, key: Optional[str] = None) -> str:
+def _llm(msg: str, temp: float = 0.0, key: Optional[str] = None) -> str:
     """
     LLM API 호출 (Gemini API 사용, 키 없으면 에러 발생)
     """
