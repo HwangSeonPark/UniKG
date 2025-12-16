@@ -511,15 +511,34 @@ def evaluaterefcand(reference, candidate):
 
     allrefdict = subjectreflist + predicatereflist + objectreflist
     allcanddict = subjectcandlist + predicatecandlist + objectcandlist
-    evaluator = Evaluator([allrefdict], [allcanddict], tags=["SUB", "PRED", "OBJ"])
 
-    eval_out = evaluator.evaluate()
-    if isinstance(eval_out, tuple):
-        results = eval_out[0]
-        results_per_tag = eval_out[1]
+    # 완전히 매칭된 토큰이 없으면 nervaluate 내부에서 IndexError가 발생할 수 있음
+    # (true[0] 또는 pred[0]가 빈 리스트인 경우).
+    # 이런 경우는 "완전 오답" 케이스이므로, 에러를 내지 않고 0 점수로 처리한다.
+    if not allrefdict or not allcanddict:
+        zero = {"precision": 0.0, "recall": 0.0, "f1": 0.0}
+        results = {
+            "strict": dict(zero),
+            "exact": dict(zero),
+            "partial": dict(zero),
+            "ent_type": dict(zero),
+        }
+        # 태그별 결과도 동일하게 0으로 채움
+        results_per_tag = {
+            "SUB": dict(zero),
+            "PRED": dict(zero),
+            "OBJ": dict(zero),
+        }
     else:
-        results = eval_out
-        results_per_tag = {}
+        evaluator = Evaluator([allrefdict], [allcanddict], tags=["SUB", "PRED", "OBJ"])
+
+        eval_out = evaluator.evaluate()
+        if isinstance(eval_out, tuple):
+            results = eval_out[0]
+            results_per_tag = eval_out[1]
+        else:
+            results = eval_out
+            results_per_tag = {}
 
     return results, results_per_tag
 
