@@ -1,6 +1,6 @@
 [["11 million copies of the flyer", "were distributed", "to the public via an 85-number distribution chain"]]
 [["23.8 % of all households", "were made up of", "individuals"], ["13 % of all households", "had", "someone living alone who was 65 years of age or older"]]
-[["this show", "has", "A British version"], ["A British version of this show", "was known as", "`` Gladiators : Train 2 Win ''"]]
+[["this show", "has", "A British version"], ["A British version of this show", "was developed", "`` Gladiators : Train 2 Win ''"], ["A British version of this show", "was known as", "`` Gladiators : Train 2 Win ''"]]
 [["A better alternative in order to find the best possible results", "would be to use", "the Smith-Waterman algorithm"]]
 [["A character", "notes", "some practical difficulties with such a map"], ["A character", "states that", "`` we now use the country itself , as its own map , and I assure you it does nearly as well . ''"]]
 [["A dam on the creek", "has created", "a lake covering for fishing"], ["A dam on the creek", "has created", "a lake covering for boating"], ["A dam on the creek", "has created", "a lake covering for swimming"]]
