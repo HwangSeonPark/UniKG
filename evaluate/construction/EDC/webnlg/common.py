@@ -46,6 +46,10 @@ def convert_to_xml(result_path: str, gold_path: str, max_length_diff=None) -> Tu
 
     pred_triplets = [l.strip() for l in open(result_path, "r").readlines()]
     gold_triplets = [l.strip() for l in open(gold_path, "r").readlines()]
+    
+    # 백틱(```) 제거: 마크다운 코드 블록 형식 처리
+    pred_triplets = [line.strip('`') for line in pred_triplets]
+    gold_triplets = [line.strip('`') for line in gold_triplets]
 
     collected_pred_triplets = []
     collected_gold_triplets = []
