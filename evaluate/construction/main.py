@@ -230,6 +230,7 @@ def _extr_ds_model(pred_path: str, gold_path: Optional[str]) -> tuple[str, str]:
     ds = "Unknown"
     mdl = "Unknown"
     
+    # 패턴 1: extract_LLM/{dataset}/{model}/triples.txt
     for i, p in enumerate(parts):
         if p == "extract_LLM" and i + 1 < len(parts):
             ds = parts[i + 1]
@@ -237,10 +238,33 @@ def _extr_ds_model(pred_path: str, gold_path: Optional[str]) -> tuple[str, str]:
                 mdl = parts[i + 2]
             break
     
+    # 패턴 2: evaluate/dataset/{model}/{dataset}/triples.txt (우선 확인)
+    if ds == "Unknown":
+        for i, p in enumerate(parts):
+            if p == "evaluate" and i + 1 < len(parts) and parts[i + 1] == "dataset":
+                if i + 2 < len(parts) and i + 3 < len(parts):
+                    mdl = parts[i + 2]
+                    ds = parts[i + 3]
+                    break
+    
+    # 패턴 3: evaluate/{model}/{dataset}/triples.txt (baseline.sh 등)
+    if ds == "Unknown":
+        for i, p in enumerate(parts):
+            if p == "evaluate" and i + 1 < len(parts) and i + 2 < len(parts):
+                next_part = parts[i + 1]
+                # "dataset"이 아닌 경우에만 모델명으로 인식
+                if next_part != "dataset":
+                    mdl = next_part
+                    ds = parts[i + 2]
+                    break
+    
     dsmap = {
         "GenWiki": "GenWiki",
+        "GenWiki-Hard": "GenWiki",
         "CaRB": "CaRB",
+        "CaRB-Expert": "CaRB",
         "KELM-sub": "KELM-sub",
+        "kelm_sub": "KELM-sub",
         "SCIERC": "SCIERC",
         "webnlg20": "webnlg20",
     }
@@ -253,13 +277,19 @@ def _extr_ds_model(pred_path: str, gold_path: Optional[str]) -> tuple[str, str]:
         "qwen": "qwen",
         "mistral": "mistral",
         "llama-8b": "llama-8b",
+        "gj": "gj",
+        "edc": "edc",
+        "kggen": "KGGen",
+        "kggen_c": "KGGEN_c",
+        "rakg": "RAKG",
+        "rakg_c": "RAKG_c",
     }
     mdl = mmap.get(mdl.lower(), mdl)
     
     return ds, mdl
 
 
-def _save_csv(dataset: str, model: str, data: Dict[str, float], csv_path: str = "evaluate/construction/result.csv") -> None:
+def _save_csv(dataset: str, model: str, data: Dict[str, float], csv_path: Optional[str] = None) -> None:
     """
     결과를 CSV 파일에 저장
     
@@ -267,8 +297,11 @@ def _save_csv(dataset: str, model: str, data: Dict[str, float], csv_path: str = 
         dataset: 데이터셋 이름
         model: 모델 이름
         data: 메트릭 값 딕셔너리
-        csv_path: CSV 파일 경로
+        csv_path: CSV 파일 경로 (None이면 모델명 기반으로 생성)
     """
+    if csv_path is None:
+        csv_path = f"evaluate/construction/{model}_result.csv"
+    
     csv_file = Path(csv_path)
     csv_file.parent.mkdir(parents=True, exist_ok=True)
     
