@@ -1,6 +1,6 @@
-# GraphJudge Evaluation Suite
+# Metrix Evaluation Suite
 
-This directory contains the GraphJudge evaluation code for knowledge graph construction tasks.
+This directory contains the Metrix evaluation code for knowledge graph construction tasks.
 
 
 
@@ -105,7 +105,7 @@ cd /path/to/KGC/evaluate/construction
 bash eval.sh <model_name> --base-dir <base_dir> --golden-dir <golden_dir>
 ```
 
-The script will automatically run GraphJudge evaluation for each dataset and save results to log files.
+The script will automatically run Metrix evaluation for each dataset and save results to log files.
 
 ---
 
@@ -117,7 +117,7 @@ To run evaluation on individual files:
 python3 -m evaluate.construction.main \
   --pred /path/to/pred.txt \
   --gold /path/to/gold.txt \
-  [--models graphjudge] \
+  [--models metrix] \
   [--log /path/to/log_file] \
   [--analyze-errors] \
   [--error-output-dir /path/to/output]
@@ -129,9 +129,9 @@ python3 -m evaluate.construction.main \
 |----------|----------|-------------|
 | `--pred` | ✅ | Path to predicted triples file |
 | `--gold` | ✅ | Path to gold triples file |
-### GraphJudge Metrics
+### Metrix Metrics
 
-GraphJudge evaluates knowledge graphs using three metrics:
+Metrix evaluates knowledge graphs using three metrics:
 
 - **G-BLEU**: Graph-based BLEU score (Precision, Recall, F1)
 - **G-ROUGE**: Graph-based ROUGE score (Precision, Recall, F1)
@@ -188,4 +188,4 @@ Each line is a Python list string containing one or more triples separated by ` 
 - All evaluations should be run from the project root directory.
 - Log files are saved to the specified `LOG_DIR` or default location.
 - CSV result files are automatically saved to `evaluate/construction/{model_name}_result.csv`.
-- GraphJudge metrics are computed for each dataset and aggregated in the final CSV output.
+- Metrix metrics are computed for each dataset and aggregated in the final CSV output.

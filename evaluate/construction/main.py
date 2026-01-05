@@ -21,10 +21,10 @@ class ModelSpec:
     handler: Callable[[str, str, Optional[str], Optional[str]], Dict[str, Any]]
 
 
-def _run_graphjudge(pred_path: str, gold_path: str, text_path: Optional[str], api_key: Optional[str]) -> Dict[str, Any]:
-    g_bleu_mod = load_module("GraphJudge", "g_bleu")
-    g_rouge_mod = load_module("GraphJudge", "g_rouge")
-    g_bertscore_mod = load_module("GraphJudge", "g_bertscore")
+def _run_metrix(pred_path: str, gold_path: str, text_path: Optional[str], api_key: Optional[str]) -> Dict[str, Any]:
+    g_bleu_mod = load_module("Metrix", "g_bleu")
+    g_rouge_mod = load_module("Metrix", "g_rouge")
+    g_bertscore_mod = load_module("Metrix", "g_bertscore")
     return {
         "G-BLEU": g_bleu_mod.g_bleu(pred_path, gold_path),
         "G-ROUGE": g_rouge_mod.g_rouge(pred_path, gold_path),
@@ -33,7 +33,7 @@ def _run_graphjudge(pred_path: str, gold_path: str, text_path: Optional[str], ap
 
 
 MODEL_SPECS: List[ModelSpec] = [
-    ModelSpec("graphjudge", "GraphJudge", ["graphjudge", "graph-judge", "gj"], False, _run_graphjudge),
+    ModelSpec("metrix", "Metrix", ["metrix", "metric", "mj"], False, _run_metrix),
 ]
 
 SPEC_BY_KEY = {spec.key: spec for spec in MODEL_SPECS}
@@ -41,11 +41,11 @@ ALIAS_TO_KEY = {alias: spec.key for spec in MODEL_SPECS for alias in spec.aliase
 
 
 def _parse_args() -> argparse.Namespace:
-    ap = argparse.ArgumentParser(description="GraphJudge Evaluation")
+    ap = argparse.ArgumentParser(description="Metrix Evaluation")
     ap.add_argument("--dataset", default=None, help="Dataset directory")
     ap.add_argument("--pred", required=True, help="Predicted triples file")
     ap.add_argument("--gold", required=True, help="Gold triples file")
-    ap.add_argument("--models", default="graphjudge", help="Models to run (default: graphjudge)")
+    ap.add_argument("--models", default="metrix", help="Models to run (default: metrix)")
     ap.add_argument("--log", default=None, help="Log file path")
     ap.add_argument("--analyze-errors", action="store_true", help="Perform error analysis and save to CSV")
     ap.add_argument("--error-output-dir", default="evaluate/construction/error_analysis", help="Directory to save error analysis results")
@@ -231,13 +231,13 @@ def _run_error_analysis(models: List[ModelSpec], args: argparse.Namespace, datas
     output_dir = args.error_output_dir
     
     for spec in models:
-        if spec.key == "graphjudge":
+        if spec.key == "metrix":
             try:
-                gj_analyze_mod = load_module("GraphJudge", "analyze_errors")
-                gj_analyze_mod.analyze_graphjudge_errors(pred_path, gold_path, output_dir, dataset, model)
-                log.info(f"GraphJudge error analysis completed: {output_dir}/{model}_{dataset}_graphjudge_errors.csv")
+                gj_analyze_mod = load_module("Metrix", "analyze_errors")
+                gj_analyze_mod.analyze_metrix_errors(pred_path, gold_path, output_dir, dataset, model)
+                log.info(f"Metrix error analysis completed: {output_dir}/{model}_{dataset}_metrix_errors.csv")
             except Exception as e:
-                log.info(f"GraphJudge error analysis failed: {e}")
+                log.info(f"Metrix error analysis failed: {e}")
 
 
 
@@ -314,7 +314,7 @@ def main() -> None:
         models = _select_models(args.models)
         
         log.info("="*80)
-        log.info("GraphJudge Evaluation Suite")
+        log.info("Metrix Evaluation Suite")
         log.info(f"Pred file: {args.pred}")
         log.info(f"Gold file: {args.gold}")
         if args.dataset:

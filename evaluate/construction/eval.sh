@@ -104,7 +104,7 @@ if [ ! -d "$MODEL_DIR" ]; then
 fi
 
 # Metrics to evaluate
-METRICS="graphjudge"
+METRICS="metrix"
 
 # Dataset mapping (for GOLD files)
 declare -A DS_MAP=(
