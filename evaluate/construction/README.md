@@ -1,24 +1,16 @@
-# Construction Metric Suite
+# GraphJudge Evaluation Suite
 
-선행연구의 평가 코드를 정리한 공간입니다.
-## 현재 제가 절대 경로로 박아놔서... 경로는 여러분의 절대경로로 하시면 됩니다 
+This directory contains the GraphJudge evaluation code for knowledge graph construction tasks.
 
-## 폴더 구조
 
-| 경로 | 설명 |
-|------|------|
-| `common/` | 엔티티 매핑, 그래프 입출력, 공통 헬퍼 |
-| `Tree-KG/`, `EDC/`, `SAC-KG/`, `GraphJudge/`, `PiVe/` | 모델별 메트릭과 README, runner, CLI |
-| `utils/` | 데이터셋 경로/동적 모듈 로딩 헬퍼 |
-| `references/` | 데이터셋 샘플 |
 
 ---
 
-##Baseline 모델 평가
+## Model Evaluation
 
-### 1. 예측 트리플 파일 구조
+### 1. Prediction Triple File Structure
 
-Baseline 모델(EDC, GraphJudge 등)의 예측 트리플 파일은 다음과 같은 구조로 준비되어야 합니다.
+Prediction triple files should be organized as follows:
 
 ```
 EXTRACT_DIR/
@@ -34,9 +26,9 @@ EXTRACT_DIR/
     └── triples.txt
 ```
 
-**예시: EDC 모델**
+**Example:**
 ```
-/home/hyyang/my_workspace/KGC/evaluate/EDC/
+/path/to/evaluate/dataset/MODEL_NAME/
 ├── GenWiki/
 │   └── triples.txt
 ├── CaRB/
@@ -44,125 +36,156 @@ EXTRACT_DIR/
 └── ...
 ```
 
-### 2. `baseline.sh` 설정
+### 2. `eval.sh` Configuration
 
-`baseline.sh` 파일을 열어 다음 변수들을 설정하세요:
+The `eval.sh` script allows you to specify paths in two ways:
+
+#### Option A: Command-line Arguments
 
 ```bash
-# 로그 디렉터리 경로
-# 예: /home/hyyang/my_workspace/KGC/evaluate/construction/logs
-LOG_DIR=""
-
-# 예측 트리플 파일이 있는 모델의 폴더 경로
-# 예: /home/hyyang/my_workspace/KGC/evaluate/EDC
-EXTRACT_DIR=""
-
-# 정답 데이터셋 디렉터리 경로
-# 예: /home/hyyang/my_workspace/KGC/datasets/construction
-GOLDEN_DIR=""
-
-# 평가할 메트릭 목록 (콤마로 구분) 우리는 이것만 쓸거니까 아래 그대로 유지 하면 됩니다. 
-# 사용 가능: edc, graphjudge, tree, sac
-MODELS="edc,graphjudge"
+bash eval.sh <model_name> \
+  --base-dir /path/to/dataset \
+  --golden-dir /path/to/golden \
+  [--log-dir /path/to/logs] \
+  [--work-dir /path/to/work]
 ```
 
-### 3. 데이터셋 매핑
+**Arguments:**
+- `--base-dir`: **Required**. Directory containing model prediction files (e.g., `/path/to/evaluate/dataset`)
+- `--golden-dir`: **Required**. Directory containing golden/ground truth files (e.g., `/path/to/datasets/construction`)
+- `--log-dir`: Optional. Directory for log files (default: `evaluate/construction/logs` relative to work directory)
+- `--work-dir`: Optional. Working directory (default: auto-detected KGC root directory)
 
-스크립트 내부의 데이터셋 매핑은 다음과 같이 설정되어 있습니다:
+**Example:**
+```bash
+bash eval.sh KGGEN_c \
+  --base-dir /home/user/KGC/evaluate/dataset \
+  --golden-dir /home/user/KGC/datasets/construction \
+  --log-dir /home/user/KGC/evaluate/construction/logs
+```
 
-| 예측 파일 디렉터리명 | 정답 파일 디렉터리명 |
-|---------------------|-------------------|
+#### Option B: Environment Variables
+
+You can also set environment variables instead of using command-line arguments:
+
+```bash
+export BASE_DIR="/path/to/dataset"
+export GOLDEN_DIR="/path/to/golden"
+export LOG_DIR="/path/to/logs"  # Optional
+export WORK_DIR="/path/to/work"  # Optional
+
+bash eval.sh <model_name>
+```
+
+**Example:**
+```bash
+export BASE_DIR="/home/user/KGC/evaluate/dataset"
+export GOLDEN_DIR="/home/user/KGC/datasets/construction"
+bash eval.sh KGGEN_c
+```
+
+### 3. Dataset Mapping
+
+The dataset mapping in the script is configured as follows:
+
+| Prediction File Directory | Golden File Directory |
+|---------------------------|----------------------|
 | `GenWiki` | `GenWiki-Hard` |
 | `CaRB` | `CaRB-Expert` |
 | `KELM-sub` | `kelm_sub` |
 | `SCIERC` | `SCIERC` |
 | `webnlg20` | `webnlg20` |
 
-필요에 따라 `DS_MAP` 배열을 수정할 수 있지만 여러분은 안해도 됩니다 
+You can modify the `DS_MAP` array in `eval.sh` if needed.
 
-### 4. 실행 방법
+### 4. Running the Evaluation
 
 ```bash
-cd /home/hyyang/my_workspace/KGC/evaluate/construction
-./baseline.sh
+cd /path/to/KGC/evaluate/construction
+bash eval.sh <model_name> --base-dir <base_dir> --golden-dir <golden_dir>
 ```
 
-스크립트는 각 데이터셋에 대해 자동으로 평가를 실행하고, 결과를 로그 파일에 저장합니다. 
+The script will automatically run GraphJudge evaluation for each dataset and save results to log files.
 
+---
 
-### 아래 내용은 안 읽으셔도 됩니다 감사합니다 
+## 🔧 Direct Execution
 
-------------------------------
-
-## 🔧 공통 실행기 (직접 실행)
-
-개별 파일에 대해 평가를 실행하려면:
+To run evaluation on individual files:
 
 ```bash
 python3 -m evaluate.construction.main \
   --pred /path/to/pred.txt \
   --gold /path/to/gold.txt \
-  --models edc,graphjudge \
-  --log /path/to/log_file
+  [--models graphjudge] \
+  [--log /path/to/log_file] \
+  [--analyze-errors] \
+  [--error-output-dir /path/to/output]
 ```
 
-### 인자 설명
+### Argument Description
 
-| 인자 | 필수 | 설명 |
-|------|------|------|
-| `--pred` | ✅ | 예측 트리플 파일 경로 |
-| `--gold` | ✅ | 정답 트리플 파일 경로 (SAC-KG 제외) |
-| `--text` | ❌ | 원문 텍스트 파일 경로 (SAC-KG 등에서만 필요) |
-| `--models` | ❌ | 평가할 메트릭 (콤마 구분, 기본값: `all`) |
-| `--log` | ❌ | 로그 파일 경로 (미지정 시 자동 생성) |
-| `--api-key` | ❌ | LLM 메트릭용 Gemini API 키 (환경변수 `GEMINI_API_KEY` 사용 가능) |
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `--pred` | ✅ | Path to predicted triples file |
+| `--gold` | ✅ | Path to gold triples file |
+### GraphJudge Metrics
 
-### 사용 가능한 메트릭
+GraphJudge evaluates knowledge graphs using three metrics:
 
-- `edc`: EDC (Partial, Strict, Exact, Exact Triple)
-- `graphjudge`: GraphJudge (G-BLEU, G-ROUGE, G-BERTScore)
-- `tree`: Tree-KG (Entity Recall, Precision, F1, MEC, RS)
-- `sac`: SAC-KG (LLM Precision, 텍스트 파일 필요)
-- `all`: 모든 메트릭 실행
+- **G-BLEU**: Graph-based BLEU score (Precision, Recall, F1)
+- **G-ROUGE**: Graph-based ROUGE score (Precision, Recall, F1)
+- **G-BERTScore**: Graph-based BERTScore (Precision, Recall, F1)
 
-### 예시: Dataset 디렉터리 지정
+### Example: Direct File Evaluation
 
 ```bash
 python3 -m evaluate.construction.main \
-  --dataset /home/hyyang/my_workspace/KGC/evaluate/construction/references \
-  --pred pred1.txt \
-  --gold g_article.txt \
-  --models edc,graphjudge
+  --pred /path/to/pred.txt \
+  --gold /path/to/gold.txt \
+  --log /path/to/log_file
 ```
 
-`--dataset`을 지정하면 상대 경로로 파일명만 지정할 수 있습니다.
+### Example: Using Dataset Directory
+
+```bash
+python3 -m evaluate.construction.main \
+  --dataset /path/to/references \
+  --pred pred1.txt \
+  --gold g_article.txt
+```
+
+If `--dataset` is specified, you can use relative paths for file names.
 
 ---
 
-## 📋 데이터셋 요구사항
+##  Dataset Requirements
 
-### 파일 형식
+### File Format
 
-- `pred.txt`, `gold.txt`, `article.txt` (선택) 세 파일 모두 **라인별 파이썬 리스트 문자열**이어야 합니다.
-- 각 라인은 하나의 샘플을 나타냅니다.
+- `pred.txt` and `gold.txt` files must be **line-by-line Python list strings**.
+- Each line represents one sample (a list of triples).
 
-### 중요 사항
+### Important Notes
 
-- ⚠️ **라인 수 일치**: `pred.txt`와 `gold.txt`의 라인 수가 서로 다르면 평가에서 오류가 발생할 수 있습니다.
-- ⚠️ **전처리**: 각 메트릭의 README에서 요구하는 추가 전처리(예: 텍스트-트리플 라인 수 일치)를 반드시 충족해야 합니다.
+- **Line Count Match**: The line counts of `pred.txt` and `gold.txt` must match. If they differ, evaluation will produce errors.
+-  **Triple Format**: Each triple should be in the format `"entity1 | relation | entity2"` within a Python list string.
 
-### 예시 파일 형식
+### Example File Format
 
 ```
 ["entity1 | relation1 | entity2"]
-["entity3 | relation2 | entity4"]
-["entity5 | relation3 | entity6"]
+["entity3 | relation2 | entity4", "entity5 | relation3 | entity6"]
+["entity7 | relation4 | entity8"]
 ```
+
+Each line is a Python list string containing one or more triples separated by ` | `.
 
 ---
 
-## 📝 참고사항
+## Notes
 
-- 모든 평가는 프로젝트 루트 디렉터리(`/home/hyyang/my_workspace/KGC`)에서 실행되어야 합니다.
-- 로그 파일은 지정한 `LOG_DIR`에 저장됩니다.
-- CSV 결과 파일은 `evaluate/construction/result.csv`에 자동으로 저장됩니다.
+- All evaluations should be run from the project root directory.
+- Log files are saved to the specified `LOG_DIR` or default location.
+- CSV result files are automatically saved to `evaluate/construction/{model_name}_result.csv`.
+- GraphJudge metrics are computed for each dataset and aggregated in the final CSV output.

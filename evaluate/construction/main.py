@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import csv
 import os
-import sys
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 from pathlib import Path
@@ -22,22 +21,6 @@ class ModelSpec:
     handler: Callable[[str, str, Optional[str], Optional[str]], Dict[str, Any]]
 
 
-def _run_edc(pred_path: str, gold_path: str, text_path: Optional[str], api_key: Optional[str]) -> Dict[str, Any]:
-    partial_mod = load_module("EDC/webnlg", "partial")
-    strict_mod = load_module("EDC/webnlg", "strict")
-    exact_mod = load_module("EDC/webnlg", "exact")
-
-    partial_scores = partial_mod.partial(pred_path, gold_path)
-    strict_scores = strict_mod.strict(pred_path, gold_path)
-    exact_scores = exact_mod.exact(pred_path, gold_path)
-
-    return {
-        "Partial": partial_scores,
-        "Strict": strict_scores,
-        "Exact": exact_scores,
-    }
-
-
 def _run_graphjudge(pred_path: str, gold_path: str, text_path: Optional[str], api_key: Optional[str]) -> Dict[str, Any]:
     g_bleu_mod = load_module("GraphJudge", "g_bleu")
     g_rouge_mod = load_module("GraphJudge", "g_rouge")
@@ -50,7 +33,6 @@ def _run_graphjudge(pred_path: str, gold_path: str, text_path: Optional[str], ap
 
 
 MODEL_SPECS: List[ModelSpec] = [
-    ModelSpec("edc", "EDC", ["edc"], False, _run_edc),
     ModelSpec("graphjudge", "GraphJudge", ["graphjudge", "graph-judge", "gj"], False, _run_graphjudge),
 ]
 
@@ -59,14 +41,14 @@ ALIAS_TO_KEY = {alias: spec.key for spec in MODEL_SPECS for alias in spec.aliase
 
 
 def _parse_args() -> argparse.Namespace:
-    ap = argparse.ArgumentParser(description="KG Evaluation")
+    ap = argparse.ArgumentParser(description="GraphJudge Evaluation")
     ap.add_argument("--dataset", default=None, help="Dataset directory")
     ap.add_argument("--pred", required=True, help="Predicted triples file")
-    ap.add_argument("--gold", default=None, help="Gold triples file")
-    ap.add_argument("--text", default=None, help="Text file")
-    ap.add_argument("--models", default="all", help="Models to run (comma-separated, or 'all')")
-    ap.add_argument("--api-key", default=os.getenv("GEMINI_API_KEY"), help="API key")
+    ap.add_argument("--gold", required=True, help="Gold triples file")
+    ap.add_argument("--models", default="graphjudge", help="Models to run (default: graphjudge)")
     ap.add_argument("--log", default=None, help="Log file path")
+    ap.add_argument("--analyze-errors", action="store_true", help="Perform error analysis and save to CSV")
+    ap.add_argument("--error-output-dir", default="evaluate/construction/error_analysis", help="Directory to save error analysis results")
     return ap.parse_args()
 
 
@@ -83,24 +65,10 @@ def _select_models(raw: str) -> List[ModelSpec]:
         key = ALIAS_TO_KEY.get(name, name)
         spec = SPEC_BY_KEY.get(key)
         if not spec:
-            raise ValueError(f"알 수 없는 모델: {part}")
+            raise ValueError(f"Unknown model: {part}")
         if spec not in selected:
             selected.append(spec)
     return selected
-
-
-def _print_value(name: str, value: Any, indent: int = 0) -> None:
-    pad = " " * indent
-    if isinstance(value, dict):
-        print(f"{pad}{name}:")
-        for sub_key, sub_val in value.items():
-            _print_value(sub_key, sub_val, indent + 2)
-    else:
-        if isinstance(value, float):
-            display = f"{value:.4f}"
-        else:
-            display = str(value)
-        print(f"{pad}{name}: {display}")
 
 
 def _prep_emb(models: List[ModelSpec], args: argparse.Namespace) -> None:
@@ -108,21 +76,18 @@ def _prep_emb(models: List[ModelSpec], args: argparse.Namespace) -> None:
 
 
 def _run_model(spec: ModelSpec, dataset_dir: Optional[str], args: argparse.Namespace) -> Dict[str, Any]:
-    if not args.gold:
-        raise ValueError(f"{spec.label} requires --gold path")
-    
     pred_path, gold_path, text_path = resolve_dataset_paths(
-        dataset_dir, args.pred, args.gold, args.text, require_text=spec.require_text, require_gold=True
+        dataset_dir, args.pred, args.gold, None, require_text=spec.require_text, require_gold=True
     )
-    return spec.handler(pred_path, gold_path or "", text_path, args.api_key)
+    return spec.handler(pred_path, gold_path or "", text_path, None)
 
 
 def _extr(res: Dict[str, Any]) -> Dict[str, float]:
     """
-    결과에서 최종 결과표용 값 추출
+    Extract values for final results table from results
     
     Returns:
-        지정 순서에 맞춘 결과 딕셔너리
+        Result dictionary in specified order
     """
     out = {}
     
@@ -144,33 +109,15 @@ def _extr(res: Dict[str, Any]) -> Dict[str, float]:
         out["G-ROUGE (Recall)"] = grg.get("recall", 0.0)
         out["G-ROUGE (F1)"] = grg.get("f1", 0.0)
     
-    if "Partial" in res:
-        prt = res["Partial"]
-        out["Partial (Precision)"] = prt.get("precision", 0.0)
-        out["Partial (Recall)"] = prt.get("recall", 0.0)
-        out["Partial (F1)"] = prt.get("f1", 0.0)
-    
-    if "Strict" in res:
-        srt = res["Strict"]
-        out["Strict (Precision)"] = srt.get("precision", 0.0)
-        out["Strict (Recall)"] = srt.get("recall", 0.0)
-        out["Strict (F1)"] = srt.get("f1", 0.0)
-    
-    if "Exact" in res:
-        ext = res["Exact"]
-        out["Exact (Precision)"] = ext.get("precision", 0.0)
-        out["Exact (Recall)"] = ext.get("recall", 0.0)
-        out["Exact (F1)"] = ext.get("f1", 0.0)
-    
     return out
 
 
 def _tbl(data: Dict[str, float]):
     """
-    최종 결과표 출력
+    Print final results table
     
     Args:
-        data: 지표별 값
+        data: Metric values
     """
     cols = [
         "G-BERTScore (Accuracy)",
@@ -182,19 +129,10 @@ def _tbl(data: Dict[str, float]):
         "G-ROUGE (Accuracy)",
         "G-ROUGE (Recall)",
         "G-ROUGE (F1)",
-        "Partial (Precision)",
-        "Partial (Recall)",
-        "Partial (F1)",
-        "Strict (Precision)",
-        "Strict (Recall)",
-        "Strict (F1)",
-        "Exact (Precision)",
-        "Exact (Recall)",
-        "Exact (F1)",
     ]
     
     log.info("\n" + "="*120)
-    log.info("최종 결과표")
+    log.info("Final Results Table")
     log.info("="*120)
     
     hdr = "\t".join(cols)
@@ -215,14 +153,14 @@ def _tbl(data: Dict[str, float]):
 
 def _extr_ds_model(pred_path: str, gold_path: Optional[str]) -> tuple[str, str]:
     """
-    경로에서 데이터셋 이름과 모델 이름 추출
+    Extract dataset name and model name from path
     
     Args:
-        pred_path: 예측 파일 경로
-        gold_path: 정답 파일 경로 (선택)
+        pred_path: Path to prediction file
+        gold_path: Path to gold file (optional)
     
     Returns:
-        (데이터셋명, 모델명) 튜플
+        Tuple of (dataset_name, model_name)
     """
     npath = os.path.normpath(os.path.abspath(pred_path))
     parts = npath.split(os.sep)
@@ -230,7 +168,7 @@ def _extr_ds_model(pred_path: str, gold_path: Optional[str]) -> tuple[str, str]:
     ds = "Unknown"
     mdl = "Unknown"
     
-    # 패턴 1: extract_LLM/{dataset}/{model}/triples.txt
+    # Pattern 1: extract_LLM/{dataset}/{model}/triples.txt
     for i, p in enumerate(parts):
         if p == "extract_LLM" and i + 1 < len(parts):
             ds = parts[i + 1]
@@ -238,7 +176,7 @@ def _extr_ds_model(pred_path: str, gold_path: Optional[str]) -> tuple[str, str]:
                 mdl = parts[i + 2]
             break
     
-    # 패턴 2: evaluate/dataset/{model}/{dataset}/triples.txt (우선 확인)
+    # Pattern 2: evaluate/dataset/{model}/{dataset}/triples.txt (check first)
     if ds == "Unknown":
         for i, p in enumerate(parts):
             if p == "evaluate" and i + 1 < len(parts) and parts[i + 1] == "dataset":
@@ -247,12 +185,12 @@ def _extr_ds_model(pred_path: str, gold_path: Optional[str]) -> tuple[str, str]:
                     ds = parts[i + 3]
                     break
     
-    # 패턴 3: evaluate/{model}/{dataset}/triples.txt (baseline.sh 등)
+    # Pattern 3: evaluate/{model}/{dataset}/triples.txt (for baseline.sh, etc.)
     if ds == "Unknown":
         for i, p in enumerate(parts):
             if p == "evaluate" and i + 1 < len(parts) and i + 2 < len(parts):
                 next_part = parts[i + 1]
-                # "dataset"이 아닌 경우에만 모델명으로 인식
+                # Only recognize as model name if not "dataset"
                 if next_part != "dataset":
                     mdl = next_part
                     ds = parts[i + 2]
@@ -270,34 +208,48 @@ def _extr_ds_model(pred_path: str, gold_path: Optional[str]) -> tuple[str, str]:
     }
     ds = dsmap.get(ds, ds)
     
-    mmap = {
-        "gpt-5-mini": "gpt-5-mini",
-        "gpt-5": "gpt-5.1",
-        "gpt-5.1": "gpt-5.1",
-        "qwen": "qwen",
-        "mistral": "mistral",
-        "llama-8b": "llama-8b",
-        "gj": "gj",
-        "edc": "edc",
-        "kggen": "KGGen",
-        "kggen_c": "KGGEN_c",
-        "rakg": "RAKG",
-        "rakg_c": "RAKG_c",
-    }
-    mdl = mmap.get(mdl.lower(), mdl)
-    
     return ds, mdl
+
+
+def _run_error_analysis(models: List[ModelSpec], args: argparse.Namespace, dataset: str, model: str) -> None:
+    """
+    Perform error analysis
+    
+    Args:
+        models: List of model specs to evaluate
+        args: Command-line arguments
+        dataset: Dataset name
+        model: Model name
+    """
+    if not args.gold:
+        return
+    
+    pred_path, gold_path, _ = resolve_dataset_paths(
+        args.dataset, args.pred, args.gold, None, require_text=False, require_gold=True
+    )
+    
+    output_dir = args.error_output_dir
+    
+    for spec in models:
+        if spec.key == "graphjudge":
+            try:
+                gj_analyze_mod = load_module("GraphJudge", "analyze_errors")
+                gj_analyze_mod.analyze_graphjudge_errors(pred_path, gold_path, output_dir, dataset, model)
+                log.info(f"GraphJudge error analysis completed: {output_dir}/{model}_{dataset}_graphjudge_errors.csv")
+            except Exception as e:
+                log.info(f"GraphJudge error analysis failed: {e}")
+
 
 
 def _save_csv(dataset: str, model: str, data: Dict[str, float], csv_path: Optional[str] = None) -> None:
     """
-    결과를 CSV 파일에 저장
+    Save results to CSV file
     
     Args:
-        dataset: 데이터셋 이름
-        model: 모델 이름
-        data: 메트릭 값 딕셔너리
-        csv_path: CSV 파일 경로 (None이면 모델명 기반으로 생성)
+        dataset: Dataset name
+        model: Model name
+        data: Dictionary of metric values
+        csv_path: CSV file path (if None, generated based on model name)
     """
     if csv_path is None:
         csv_path = f"evaluate/construction/{model}_result.csv"
@@ -315,15 +267,6 @@ def _save_csv(dataset: str, model: str, data: Dict[str, float], csv_path: Option
         "G-ROUGE (Accuracy)",
         "G-ROUGE (Recall)",
         "G-ROUGE (F1)",
-        "Partial (Precision)",
-        "Partial (Recall)",
-        "Partial (F1)",
-        "Strict (Precision)",
-        "Strict (Recall)",
-        "Strict (F1)",
-        "Exact (Precision)",
-        "Exact (Recall)",
-        "Exact (F1)"
     ]
     
     rows = []
@@ -359,7 +302,7 @@ def _save_csv(dataset: str, model: str, data: Dict[str, float], csv_path: Option
         wrtr.writeheader()
         wrtr.writerows(rows)
     
-    log.info(f"CSV 저장 완료: {csv_file} ({dataset}, {model})")
+    log.info(f"CSV saved: {csv_file} ({dataset}, {model})")
 
 
 def main() -> None:
@@ -371,15 +314,12 @@ def main() -> None:
         models = _select_models(args.models)
         
         log.info("="*80)
-        log.info("Knowledge Graph Construction Evaluation Suite")
+        log.info("GraphJudge Evaluation Suite")
         log.info(f"Pred file: {args.pred}")
-        if args.gold:
-            log.info(f"Gold file: {args.gold}")
-        if args.text:
-            log.info(f"Text file: {args.text}")
+        log.info(f"Gold file: {args.gold}")
         if args.dataset:
             log.info(f"Dataset dir: {args.dataset}")
-        log.info(f"평가 메트릭: {', '.join([m.label for m in models])}")
+        log.info(f"Evaluation metrics: {', '.join([m.label for m in models])}")
         log.info("="*80)
         
         _prep_emb(models, args)
@@ -387,7 +327,7 @@ def main() -> None:
         all_r = {}
         
         for spec in models:
-            log.step(f"{spec.label} 평가", "시작")
+            log.step(f"{spec.label} evaluation", "start")
             results = _run_model(spec, args.dataset, args)
             
             for key, value in results.items():
@@ -395,13 +335,16 @@ def main() -> None:
             
             all_r.update(results)
             
-            log.done(f"{spec.label} 평가", "완료")
+            log.done(f"{spec.label} evaluation", "completed")
         
         fdata = _extr(all_r)
         _tbl(fdata)
         
         ds, mdl = _extr_ds_model(args.pred, args.gold)
         _save_csv(ds, mdl, fdata)
+        
+        if args.analyze_errors:
+            _run_error_analysis(models, args, ds, mdl)
         
     finally:
         lgr.close()

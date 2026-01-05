@@ -1,8 +1,4 @@
 
-# g_bertscore: model_type="bert-base-uncased", device="cuda:1"(실패 시 cpu), 빈 엣지일 때 0.0으로 안전 처리
-# g_bertcore: 모델 타입/디바이스 기본값(영어 기본은 roberta-large), 안전 처리 없음
-# 결과적으로 BERT 임베딩이 달라 매칭 비용 행렬이 달라지고(헝가리안 매칭 결과 변화), 평균 P/R/F1이 달라짐. 그래서 G-BERTCore가 더 높은 점수로 나왔다.
-# 더 강한 백본(표현력↑)으로 엣지 문장 임베딩 품질이 높아 헝가리안 매칭 결과가 인간 판단과 상관이 높은 경향
 import numpy as np
 from bert_score import score as score_bert
 from scipy.optimize import linear_sum_assignment
@@ -57,17 +53,17 @@ def _get_bert_score(all_gold_edges, all_pred_edges):
 
 def g_bertscore(pred_path: str, gold_path: str) -> Dict[str, float]:
 	"""
-	G-BERTScore(그래프-수준 BERTScore) 점수를 계산한다.
-	- 입력 파일은 각 줄에 트리플 배열이 있는 형식
-	- 각 엣지를 문장으로 보고, 엣지 간 BERTScore F1을 비용 행렬로 하여 헝가리안 매칭
-	반환:
+	G-BERTScore score
+	- Input file is a list of triples in each line
+	- Each edge is considered as a sentence, and matching is performed by the Hungarian algorithm on the BERTScore F1 matrix
+	Return:
 	- {'precision': float, 'recall': float, 'f1': float}
 	"""
 	gold_graphs = load_lines_safe(gold_path)
 	pred_graphs = load_lines_safe(pred_path)
 
 	if len(gold_graphs) != len(pred_graphs):
-		raise ValueError("gold와 pred의 샘플 수가 일치하지 않습니다.")
+		raise ValueError("The number of samples in gold and pred do not match.")
 
 	gold_edges = split_to_edges(gold_graphs)
 	pred_edges = split_to_edges(pred_graphs)

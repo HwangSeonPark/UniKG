@@ -18,3 +18,5 @@ __pycache__/
 /experiments/MINE/results/
 /experiments/MINE/results/
 *.zip
+/baseline
+*.env

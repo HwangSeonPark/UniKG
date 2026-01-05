@@ -17,17 +17,17 @@ def _scores(cost_matrix: np.ndarray) -> Tuple[float, float, float]:
 
 def g_rouge(pred_path: str, gold_path: str) -> dict:
 	"""
-	G-ROUGE(그래프-수준 ROUGE) 점수를 계산한다.
-	- 입력 파일은 각 줄에 트리플 배열이 있는 형식
-	- 각 엣지를 문장으로 보고 rouge2 precision을 기반으로 매칭
-	반환:
+	G-ROUGE score
+	- Input file is a list of triples in each line
+	- Each edge is considered as a sentence, and matching is performed by the Hungarian algorithm on the ROUGE-2 precision matrix
+	Return:
 	- {'precision': float, 'recall': float, 'f1': float}
 	"""
 	gold_graphs = load_lines_safe(gold_path)
 	pred_graphs = load_lines_safe(pred_path)
 
 	if len(gold_graphs) != len(pred_graphs):
-		raise ValueError("gold와 pred의 샘플 수가 일치하지 않습니다.")
+		raise ValueError("The number of samples in gold and pred do not match.")
 
 	gold_edges = split_to_edges(gold_graphs)
 	pred_edges = split_to_edges(pred_graphs)

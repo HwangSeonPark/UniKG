@@ -17,18 +17,18 @@ def _scores(cost_matrix: np.ndarray) -> Tuple[float, float, float]:
 
 def g_bleu(pred_path: str, gold_path: str) -> dict:
 	"""
-	G-BLEU(그래프-수준 BLEU) 점수를 계산한다.
-	- 입력 파일은 각 줄에 트리플 배열이 있는 형식
-	- BLEU는 문장 단위로 계산되며, 각 엣지를 문장으로 간주
-	- 매칭은 BLEU 점수 행렬에 대해 헝가리안 알고리즘으로 수행
-	반환:
+	G-BLEU score
+	- Input file is a list of triples in each line
+	- BLEU is calculated by sentence unit, and each edge is considered as a sentence
+	- Matching is performed by the Hungarian algorithm on the BLEU score matrix
+	Return:
 	- {'precision': float, 'recall': float, 'f1': float}
 	"""
 	gold_graphs = load_lines_safe(gold_path)
 	pred_graphs = load_lines_safe(pred_path)
 
 	if len(gold_graphs) != len(pred_graphs):
-		raise ValueError("gold와 pred의 샘플 수가 일치하지 않습니다.")
+		raise ValueError("The number of samples in gold and pred do not match.")
 
 	gold_edges = split_to_edges(gold_graphs)
 	pred_edges = split_to_edges(pred_graphs)
@@ -47,7 +47,7 @@ def g_bleu(pred_path: str, gold_path: str) -> dict:
 	ntot = len(gold_tokens)
 	tstr = time.time()
 	if log:
-		log.info(f"[G-BLEU] 총 {ntot}개 샘플 평가 시작")
+		log.info(f"[G-BLEU] Evaluating {ntot} samples")
 
 	for i in range(len(gold_tokens)):
 		tcur = time.time() - tstr
@@ -56,7 +56,7 @@ def g_bleu(pred_path: str, gold_path: str) -> dict:
 		pct = int(((i + 1) / ntot) * 100)
 		
 		if log and (i % max(1, ntot // 20) == 0 or i < 3):
-			log.info(f"[G-BLEU] 샘플 {i+1}/{ntot} ({pct}%) | 경과: {tcur:.1f}s | 남음: {tlft:.1f}s")
+			log.info(f"[G-BLEU] Sample {i+1}/{ntot} ({pct}%) | Elapsed: {tcur:.1f}s | Remaining: {tlft:.1f}s")
 		
 		score_bleu = np.zeros((len(pred_tokens[i]), len(gold_tokens[i])))
 		for p_idx in range(len(pred_tokens[i])):
@@ -71,7 +71,7 @@ def g_bleu(pred_path: str, gold_path: str) -> dict:
 		recalls_bleu.append(r)
 		f1s_bleu.append(f)
 	
-	print(f"  [G-BLEU] 평가 완료: {ntot}개 샘플")
+	print(f"  [G-BLEU] Evaluation completed: {ntot} samples")
 
 	n = len(gold_graphs) if len(gold_graphs) > 0 else 1
 	return {
