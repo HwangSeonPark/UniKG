@@ -3,8 +3,8 @@ from rouge_score import rouge_scorer
 from scipy.optimize import linear_sum_assignment
 from typing import Tuple
 
-from evaluate.construction.common.graph.utils import split_to_edges, get_tokens
-from evaluate.construction.common.graph.io import load_lines_safe
+from evaluate.common.graph.utils import split_to_edges, get_tokens
+from evaluate.common.graph.io import load_lines_safe
 
 
 def _scores(cost_matrix: np.ndarray) -> Tuple[float, float, float]:

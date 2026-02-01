@@ -8,7 +8,7 @@ _MODULE_CACHE: dict[str, ModuleType] = {}
 
 
 def _ensure_package(folder: str) -> str:
-    pkg_name = "evaluate.construction"
+    pkg_name = "evaluate"
     if not folder:
         return pkg_name
 
@@ -29,7 +29,7 @@ def _ensure_package(folder: str) -> str:
 
 def load_module(folder: str, module_name: str) -> ModuleType:
     """
-    폴더명에 하이픈이 포함되어도 안전하게 단일 파이썬 모듈로 로드한다.
+    Load a single Python module safely even if the folder name contains hyphens.
     """
     key = f"{folder}:{module_name}"
     if key in _MODULE_CACHE:

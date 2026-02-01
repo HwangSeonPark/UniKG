@@ -14,13 +14,13 @@ Prediction triple files should be organized as follows:
 
 ```
 EXTRACT_DIR/
-├── GenWiki/
+├── genwiki-hard/
 │   └── triples.txt
-├── CaRB/
+├── carb-expert/
 │   └── triples.txt
-├── KELM-sub/
+├── kelm_sub/
 │   └── triples.txt
-├── SCIERC/
+├── scierc/
 │   └── triples.txt
 └── webnlg20/
     └── triples.txt
@@ -28,10 +28,10 @@ EXTRACT_DIR/
 
 **Example:**
 ```
-/path/to/evaluate/dataset/MODEL_NAME/
-├── GenWiki/
+/path/to/predictions/MODEL_NAME/
+├── genwiki-hard/
 │   └── triples.txt
-├── CaRB/
+├── carb-expert/
 │   └── triples.txt
 └── ...
 ```
@@ -51,17 +51,17 @@ bash eval.sh <model_name> \
 ```
 
 **Arguments:**
-- `--base-dir`: **Required**. Directory containing model prediction files (e.g., `/path/to/evaluate/dataset`)
-- `--golden-dir`: **Required**. Directory containing golden/ground truth files (e.g., `/path/to/datasets/construction`)
-- `--log-dir`: Optional. Directory for log files (default: `evaluate/construction/logs` relative to work directory)
+- `--base-dir`: **Required**. Directory containing model prediction files (e.g., `/path/to/predictions`)
+- `--golden-dir`: **Required**. Directory containing golden/ground truth files (e.g., `/path/to/datasets`)
+- `--log-dir`: Optional. Directory for log files (default: `evaluate/logs` relative to work directory)
 - `--work-dir`: Optional. Working directory (default: auto-detected KGC root directory)
 
 **Example:**
 ```bash
 bash eval.sh KGGEN_c \
-  --base-dir /home/user/KGC/evaluate/dataset \
-  --golden-dir /home/user/KGC/datasets/construction \
-  --log-dir /home/user/KGC/evaluate/construction/logs
+  --base-dir /home/user/KGC/predictions \
+  --golden-dir /home/user/KGC/datasets \
+  --log-dir /home/user/KGC/evaluate/logs
 ```
 
 #### Option B: Environment Variables
@@ -79,8 +79,8 @@ bash eval.sh <model_name>
 
 **Example:**
 ```bash
-export BASE_DIR="/home/user/KGC/evaluate/dataset"
-export GOLDEN_DIR="/home/user/KGC/datasets/construction"
+export BASE_DIR="/home/user/KGC/predictions"
+export GOLDEN_DIR="/home/user/KGC/datasets"
 bash eval.sh KGGEN_c
 ```
 
@@ -90,10 +90,10 @@ The dataset mapping in the script is configured as follows:
 
 | Prediction File Directory | Golden File Directory |
 |---------------------------|----------------------|
-| `GenWiki` | `GenWiki-Hard` |
-| `CaRB` | `CaRB-Expert` |
-| `KELM-sub` | `kelm_sub` |
-| `SCIERC` | `SCIERC` |
+| `genwiki-hard` | `genwiki-hard` |
+| `carb-expert` | `carb-expert` |
+| `kelm_sub` | `kelm_sub` |
+| `scierc` | `scierc` |
 | `webnlg20` | `webnlg20` |
 
 You can modify the `DS_MAP` array in `eval.sh` if needed.
@@ -101,7 +101,7 @@ You can modify the `DS_MAP` array in `eval.sh` if needed.
 ### 4. Running the Evaluation
 
 ```bash
-cd /path/to/KGC/evaluate/construction
+cd /path/to/KGC/evaluate
 bash eval.sh <model_name> --base-dir <base_dir> --golden-dir <golden_dir>
 ```
 
@@ -114,7 +114,7 @@ The script will automatically run Metrix evaluation for each dataset and save re
 To run evaluation on individual files:
 
 ```bash
-python3 -m evaluate.construction.main \
+python3 -m evaluate.main \
   --pred /path/to/pred.txt \
   --gold /path/to/gold.txt \
   [--models metrix] \
@@ -140,7 +140,7 @@ Metrix evaluates knowledge graphs using three metrics:
 ### Example: Direct File Evaluation
 
 ```bash
-python3 -m evaluate.construction.main \
+python3 -m evaluate.main \
   --pred /path/to/pred.txt \
   --gold /path/to/gold.txt \
   --log /path/to/log_file
@@ -149,7 +149,7 @@ python3 -m evaluate.construction.main \
 ### Example: Using Dataset Directory
 
 ```bash
-python3 -m evaluate.construction.main \
+python3 -m evaluate.main \
   --dataset /path/to/references \
   --pred pred1.txt \
   --gold g_article.txt
@@ -187,5 +187,5 @@ Each line is a Python list string containing one or more triples separated by ` 
 
 - All evaluations should be run from the project root directory.
 - Log files are saved to the specified `LOG_DIR` or default location.
-- CSV result files are automatically saved to `evaluate/construction/{model_name}_result.csv`.
+- CSV result files are automatically saved to `evaluate/{model_name}_result.csv`.
 - Metrix metrics are computed for each dataset and aggregated in the final CSV output.

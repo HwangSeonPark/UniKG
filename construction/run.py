@@ -2,18 +2,18 @@ import os
 import json
 import ast
 import sys
-from refiner import TpRef
+from verifier import TpRef
 
 
 # Paths will be passed as arguments
 
-# Dataset mapping (for reference)
+# Dataset mapping (canonical dataset names)
 DATASET_MAPPING = {
     "webnlg20": "webnlg20",
-    "CaRB": "CaRB-Expert",
-    "KELM-sub": "kelm_sub",
-    "GenWiki": "GenWiki-Hard",
-    "SCIERC": "SCIERC"
+    "carb-expert": "carb-expert",
+    "kelm_sub": "kelm_sub",
+    "genwiki-hard": "genwiki-hard",
+    "scierc": "scierc",
 }
 
 
@@ -22,6 +22,28 @@ DEFAULT_MAX_WORKERS = int(os.getenv("REFINER_MAX_WORKERS"))
 DEFAULT_MODEL = os.getenv("REFINER_MODEL")
 DEFAULT_MAX_TOKENS = int(os.getenv("REFINER_MAX_TOKENS"))
 DEFAULT_HOST = os.getenv("REFINER_HOST", "localhost")
+
+def dedup_row(row, canon):
+    """Deduplicate triples within a row (case-insensitive) and reuse canonical casing across rows."""
+    if not row or not isinstance(row, list):
+        return []
+    seen = set()
+    out = []
+    for tp in row:
+        if not isinstance(tp, (list, tuple)) or len(tp) != 3:
+            continue
+        s, p, o = tp
+        s = s if isinstance(s, str) else (str(s) if s is not None else "")
+        p = p if isinstance(p, str) else (str(p) if p is not None else "")
+        o = o if isinstance(o, str) else (str(o) if o is not None else "")
+        key = (s.lower(), p.lower(), o.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        if key not in canon:
+            canon[key] = [s, p, o]
+        out.append(canon[key])
+    return out
 
 def map_articles_to_triples(articles_path, triples_path, output_path=None, dataset_name=None, actual_dir=None):
     if not os.path.exists(articles_path):
@@ -74,7 +96,7 @@ def map_articles_to_triples(articles_path, triples_path, output_path=None, datas
         "total_articles": len(mapping)
     }
     
-    # 출력 파일에 저장
+    # Save to output file
     if output_path:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         output_data = {
@@ -92,7 +114,7 @@ def get_article_for_triple(mapping, triple, article_index=None):
     results = []
     
     if article_index is not None:
-        # 특정 인덱스에서만 검색
+        # Search within a specific index only
         if article_index in mapping:
             article_data = mapping[article_index]
             if triple in article_data["triples"]:
@@ -102,7 +124,7 @@ def get_article_for_triple(mapping, triple, article_index=None):
                     "triple": triple
                 })
     else:
-        # 전체 매핑에서 검색
+        # Search the full mapping
         for idx, article_data in mapping.items():
             if triple in article_data["triples"]:
                 results.append({
@@ -149,6 +171,12 @@ def main():
     with open(prd_p, 'r', encoding='utf-8') as f:
         preds = [l.strip() for l in f.readlines()]
     
+    lim = int(os.getenv("LIM", "0") or "0")
+    if lim > 0:
+        lim = min(lim, len(txts), len(preds))
+        txts = txts[:lim]
+        preds = preds[:lim]
+    
     # Output directory
     out_dir = os.path.join(output_dir, dset_nm)
     os.makedirs(out_dir, exist_ok=True)
@@ -158,10 +186,11 @@ def main():
     
     # Process and save refined triples
     outs = ref.proc_batch(txts, preds)
+    canon = {}
     
     with open(refined_p, 'w', encoding='utf-8') as f:
         for tps in outs:
-            f.write(str(tps) + '\n')
+            f.write(str(dedup_row(tps, canon)) + '\n')
 
 if __name__ == "__main__":
     main()

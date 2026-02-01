@@ -1,7 +1,29 @@
 import os
 import json
 import ast
-from refiner_gpt import TpRef
+from verifier_gpt import TpRef
+
+def dedup_row(row, canon):
+    """Deduplicate triples within a row (case-insensitive) and reuse canonical casing across rows."""
+    if not row or not isinstance(row, list):
+        return []
+    seen = set()
+    out = []
+    for tp in row:
+        if not isinstance(tp, (list, tuple)) or len(tp) != 3:
+            continue
+        s, p, o = tp
+        s = s if isinstance(s, str) else (str(s) if s is not None else "")
+        p = p if isinstance(p, str) else (str(p) if p is not None else "")
+        o = o if isinstance(o, str) else (str(o) if o is not None else "")
+        key = (s.lower(), p.lower(), o.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        if key not in canon:
+            canon[key] = [s, p, o]
+        out.append(canon[key])
+    return out
 
 def map_articles_to_triples(articles_path, triples_path, output_path=None, dataset_name=None, actual_dir=None):
 
@@ -13,15 +35,15 @@ def map_articles_to_triples(articles_path, triples_path, output_path=None, datas
         print(f"Warning: {triples_path} not found")
         return {}
     
-    # 아티클 읽기
+    # Read articles
     with open(articles_path, 'r', encoding='utf-8') as f:
         articles = [l.strip() for l in f.readlines()]
     
-    # 트리플 읽기
+    # Read triples
     with open(triples_path, 'r', encoding='utf-8') as f:
         triples_lines = [l.strip() for l in f.readlines()]
     
-    # 매핑 생성
+    # Create mapping
     mapping = {}
     min_len = min(len(articles), len(triples_lines))
     
@@ -29,7 +51,7 @@ def map_articles_to_triples(articles_path, triples_path, output_path=None, datas
         article = articles[idx]
         triple_str = triples_lines[idx]
         
-        # 트리플 파싱
+        # Parse triples
         try:
             if triple_str:
                 triples = ast.literal_eval(triple_str)
@@ -46,7 +68,7 @@ def map_articles_to_triples(articles_path, triples_path, output_path=None, datas
             "num_triples": len(triples)
         }
     
-    # 메타데이터 추가
+    # Add metadata
     metadata = {
         "dataset_name": dataset_name,
         "actual_directory": actual_dir,
@@ -55,7 +77,7 @@ def map_articles_to_triples(articles_path, triples_path, output_path=None, datas
         "total_articles": len(mapping)
     }
     
-    # 출력 파일에 저장
+    # Save to output file
     if output_path:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         output_data = {
@@ -76,7 +98,7 @@ def get_article_for_triple(mapping, triple, article_index=None):
     results = []
     
     if article_index is not None:
-        # 특정 인덱스에서만 검색
+        # Search within a specific index only
         if article_index in mapping:
             article_data = mapping[article_index]
             if triple in article_data["triples"]:
@@ -86,7 +108,7 @@ def get_article_for_triple(mapping, triple, article_index=None):
                     "triple": triple
                 })
     else:
-        # 전체 매핑에서 검색
+        # Search the full mapping
         for idx, article_data in mapping.items():
             if triple in article_data["triples"]:
                 results.append({
@@ -109,9 +131,6 @@ def main():
     input_dir = sys.argv[2]
     output_dir = sys.argv[3]
     
-    # Use GPT-5.1 (API key loaded from environment variable OPENAI_API_KEY)
-    ref = TpRef(max_workers=5)
-    
     # Read articles from input folder or file
     if os.path.isfile(input_dir):
         src_p = input_dir
@@ -126,8 +145,11 @@ def main():
         return
     
     if not os.path.exists(input_triples_p):
-        print(f"Skip: {input_triples_p} not found (run extract_gpt.py first)")
+        print(f"Skip: {input_triples_p} not found (run extractor_gpt.py first)")
         return
+    
+    # Use GPT-5.1 (API key loaded from environment variable OPENAI_API_KEY)
+    ref = TpRef(max_workers=5)
     
     # Output directory
     out_dir = os.path.join(output_dir, dset_nm)
@@ -140,11 +162,18 @@ def main():
     with open(input_triples_p, 'r', encoding='utf-8') as f:
         preds = [l.strip() for l in f.readlines()]
     
+    lim = int(os.getenv("LIM", "0") or "0")
+    if lim > 0:
+        lim = min(lim, len(txts), len(preds))
+        txts = txts[:lim]
+        preds = preds[:lim]
+    
     outs = ref.proc_batch(txts, preds)
     
     # Output file for refined triples
     refined_p = os.path.join(out_dir, "refined_triples.txt")
-    final = [str(o) for o in outs]
+    canon = {}
+    final = [str(dedup_row(o, canon)) for o in outs]
     with open(refined_p, 'w', encoding='utf-8') as f:
         f.write('\n'.join(final))
 

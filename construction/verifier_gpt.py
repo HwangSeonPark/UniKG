@@ -3,7 +3,7 @@ import ast
 import time
 from openai import OpenAI
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from refiner_base import TpRefBase
+from verifier_vlm import TpRefBase
 
 
 class TpRef(TpRefBase):
@@ -116,6 +116,6 @@ class TpRef(TpRefBase):
 
 
 if __name__ == "__main__":
-    print("refiner_gpt.py - TpRef class module")
+    print("verifier_gpt.py - TpRef class module")
     print("This file is imported by run_gpt.py to use as a library.")
-    print("Actual execution is done using 'python verifier/run_gpt.py'.")
+    print("Actual execution is done using 'python construction/run_gpt.py'.")

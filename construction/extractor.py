@@ -6,7 +6,7 @@ import time
 from typing import List, Tuple
 from openai import AsyncOpenAI
 from openai import APIConnectionError, APIError
-from extract_base import (
+from extractor_vlm import (
     SYSTEM_PROMPT, build_prompt, safe_parse_response, postprocess_triplets
 )
 
@@ -36,7 +36,6 @@ async def extract_triplets_with_index(
     text: str,
     model_name: str,
     max_retries: int = MAX_RETRIES,
-    file_name: str = ""
 ) -> Tuple[int, List]:
     """Extract triplets asynchronously"""
     text_len = len(text)
@@ -123,18 +122,17 @@ async def process_dataset_async(dataset_name: str, client: AsyncOpenAI, model_na
     with open(input_path, "r", encoding="utf-8") as f:
         texts = [line.strip() for line in f if line.strip()]
     
+    lim = int(os.getenv("LIM", "0") or "0")
+    if lim > 0:
+        texts = texts[:lim]
+    
     total_lines = len(texts)
     print(f"Total {total_lines} lines to process...")
     print(f"Batch size: {BATCH_SIZE} (concurrent requests)\n")
     
-    results_dict = {}
-    
-    
-    overall_start_time = time.time()
     with open(output_path, "w", encoding="utf-8") as fout:
         for batch_start in range(0, total_lines, BATCH_SIZE):
             batch_end = min(batch_start + BATCH_SIZE, total_lines)
-            batch_start_time = time.time()
             
             # Create batch tasks
             tasks = [
@@ -155,7 +153,7 @@ async def process_dataset_async(dataset_name: str, client: AsyncOpenAI, model_na
             progress = batch_end
             print(f"Progress: {progress}/{total_lines} ({progress/total_lines*100:.1f}%)", flush=True)
     
-    print(f"✓ {dataset_name} processing complete!", flush=True)
+    print(f"{dataset_name} processing complete!", flush=True)
 
 
 async def process_mine_dataset_async(client: AsyncOpenAI, model_name: str, 
@@ -186,16 +184,18 @@ async def process_mine_dataset_async(client: AsyncOpenAI, model_name: str,
     with open(articles_file, "r", encoding="utf-8") as f:
         texts = [line.strip() for line in f if line.strip()]
     
+    lim = int(os.getenv("LIM", "0") or "0")
+    if lim > 0:
+        texts = texts[:lim]
+    
     total_lines = len(texts)
     print(f"Total {total_lines} lines to process...")
     print(f"Batch size: {BATCH_SIZE} (concurrent requests)\n")
     
     # Process in batches
-    overall_start_time = time.time()
     with open(output_path, "w", encoding="utf-8") as fout:
         for batch_start in range(0, total_lines, BATCH_SIZE):
             batch_end = min(batch_start + BATCH_SIZE, total_lines)
-            batch_start_time = time.time()
             
             # Create batch tasks
             tasks = [
@@ -216,13 +216,13 @@ async def process_mine_dataset_async(client: AsyncOpenAI, model_name: str,
             progress = batch_end
             print(f"Progress: {progress}/{total_lines} ({progress/total_lines*100:.1f}%)", flush=True)
     
-    print(f"✓ mine dataset processing complete!", flush=True)
+    print("mine dataset processing complete!", flush=True)
 
 
 async def main():
     # Parse command line arguments
     if len(sys.argv) < 4:
-        print("Usage: python extract.py <model_name> <dataset_name> <input_dir> <output_dir>")
+        print("Usage: python extractor.py <model_name> <dataset_name> <input_dir> <output_dir>")
         sys.exit(1)
     
     mdl_nm = sys.argv[1]

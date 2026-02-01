@@ -1,6 +1,6 @@
-# Verifier Pipeline
+# Construction Pipeline
 
-This pipeline processes knowledge graph triple extraction and refinement from articles.
+This pipeline processes knowledge graph triple extraction and verification/refinement from articles.
 
 ## Usage
 
@@ -33,22 +33,22 @@ bash run.sh gpt mine /path/to/wikiqa/articles
 
 ## Model Support
 
-- **Non-GPT models**: Uses `extract.py` for extraction (e.g., qwen, mistral)
-- **GPT models**: Uses `extract_gpt.py` for extraction (e.g., gpt, gpt-5.1)
-- **Refinement**: Always uses `run.py` with qwen model (regardless of extraction model)
+- **Non-GPT models**: Uses `extractor.py` for extraction (e.g., qwen, mistral)
+- **GPT models**: Uses `extractor_gpt.py` for extraction (e.g., gpt, gpt-5.1)
+- **Verification/refinement**: Always uses `run.py` with qwen model (regardless of extraction model)
 
 ## Pipeline Steps
 
 1. **Split Articles**: If articles exceed 2048 characters, split them at sentence boundaries
 2. **Extract Triples**: Extract knowledge graph triples from articles using specified model
-3. **Refine Triples**: Refine extracted triples using qwen model (always)
+3. **Verify/Refine Triples**: Verify/refine extracted triples using qwen model (always)
 4. **Merge Triples**: Merge split triples back to original article count
 5. **Cleanup**: Remove temporary split article files
 
 ## Output Structure
 
 ```
-verifier/
+construction/
 ├── input/              # Temporary split articles
 │   ├── articles.txt    # All split articles (one per line)
 │   └── mapping.json    # Mapping from original to split indices
@@ -62,10 +62,10 @@ verifier/
 ## Dataset Names
 
 - `webnlg20`
-- `CaRB` (maps to `CaRB-Expert`)
-- `KELM-sub` (maps to `kelm_sub`)
-- `GenWiki` (maps to `GenWiki-Hard`)
-- `SCIERC`
+- `carb-expert`
+- `kelm_sub`
+- `genwiki-hard`
+- `scierc`
 - `mine` (requires articles directory path as 3rd argument or `MINE_ARTICLES_PATH` environment variable)
 - `all` (processes all datasets except mine)
 
@@ -86,5 +86,5 @@ verifier/
 
 The codebase uses shared modules to reduce duplication:
 
-- `extract_base.py`: Common prompts and postprocessing functions for extraction
-- `refiner_base.py`: Common refinement methods and prompt building
+- `extractor_vlm.py`: Common prompts and postprocessing functions for extraction
+- `verifier_vlm.py`: Common refinement methods and prompt building

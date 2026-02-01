@@ -7,9 +7,9 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 from pathlib import Path
 
-from evaluate.construction.utils.dataset import resolve_dataset_paths
-from evaluate.construction.utils.importing import load_module
-from evaluate.construction.common import logger as log
+from evaluate.utils.dataset import resolve_dataset_paths
+from evaluate.utils.importing import load_module
+from evaluate.common import logger as log
 
 
 @dataclass(frozen=True)
@@ -22,9 +22,9 @@ class ModelSpec:
 
 
 def _run_metrix(pred_path: str, gold_path: str, text_path: Optional[str], api_key: Optional[str]) -> Dict[str, Any]:
-    g_bleu_mod = load_module("Metrix", "g_bleu")
-    g_rouge_mod = load_module("Metrix", "g_rouge")
-    g_bertscore_mod = load_module("Metrix", "g_bertscore")
+    g_bleu_mod = load_module("metrix", "g_bleu")
+    g_rouge_mod = load_module("metrix", "g_rouge")
+    g_bertscore_mod = load_module("metrix", "g_bertscore")
     return {
         "G-BLEU": g_bleu_mod.g_bleu(pred_path, gold_path),
         "G-ROUGE": g_rouge_mod.g_rouge(pred_path, gold_path),
@@ -48,7 +48,7 @@ def _parse_args() -> argparse.Namespace:
     ap.add_argument("--models", default="metrix", help="Models to run (default: metrix)")
     ap.add_argument("--log", default=None, help="Log file path")
     ap.add_argument("--analyze-errors", action="store_true", help="Perform error analysis and save to CSV")
-    ap.add_argument("--error-output-dir", default="evaluate/construction/error_analysis", help="Directory to save error analysis results")
+    ap.add_argument("--error-output-dir", default="evaluate/error_analysis", help="Directory to save error analysis results")
     return ap.parse_args()
 
 
@@ -197,13 +197,10 @@ def _extr_ds_model(pred_path: str, gold_path: Optional[str]) -> tuple[str, str]:
                     break
     
     dsmap = {
-        "GenWiki": "GenWiki",
-        "GenWiki-Hard": "GenWiki",
-        "CaRB": "CaRB",
-        "CaRB-Expert": "CaRB",
-        "KELM-sub": "KELM-sub",
-        "kelm_sub": "KELM-sub",
-        "SCIERC": "SCIERC",
+        "genwiki-hard": "genwiki-hard",
+        "carb-expert": "carb-expert",
+        "kelm_sub": "kelm_sub",
+        "scierc": "scierc",
         "webnlg20": "webnlg20",
     }
     ds = dsmap.get(ds, ds)
@@ -233,7 +230,7 @@ def _run_error_analysis(models: List[ModelSpec], args: argparse.Namespace, datas
     for spec in models:
         if spec.key == "metrix":
             try:
-                gj_analyze_mod = load_module("Metrix", "analyze_errors")
+                gj_analyze_mod = load_module("metrix", "analyze_errors")
                 gj_analyze_mod.analyze_metrix_errors(pred_path, gold_path, output_dir, dataset, model)
                 log.info(f"Metrix error analysis completed: {output_dir}/{model}_{dataset}_metrix_errors.csv")
             except Exception as e:
@@ -252,7 +249,7 @@ def _save_csv(dataset: str, model: str, data: Dict[str, float], csv_path: Option
         csv_path: CSV file path (if None, generated based on model name)
     """
     if csv_path is None:
-        csv_path = f"evaluate/construction/{model}_result.csv"
+        csv_path = f"evaluate/{model}_result.csv"
     
     csv_file = Path(csv_path)
     csv_file.parent.mkdir(parents=True, exist_ok=True)

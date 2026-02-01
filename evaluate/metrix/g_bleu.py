@@ -3,8 +3,8 @@ from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 from scipy.optimize import linear_sum_assignment
 from typing import Tuple
 
-from evaluate.construction.common.graph.utils import split_to_edges, get_tokens
-from evaluate.construction.common.graph.io import load_lines_safe
+from evaluate.common.graph.utils import split_to_edges, get_tokens
+from evaluate.common.graph.io import load_lines_safe
 
 
 def _scores(cost_matrix: np.ndarray) -> Tuple[float, float, float]:
@@ -36,7 +36,7 @@ def g_bleu(pred_path: str, gold_path: str) -> dict:
 
 	import time
 	try:
-		from evaluate.construction.common import logger as log
+		from evaluate.common import logger as log
 	except:
 		log = None
 	

@@ -6,7 +6,7 @@ import sys
 from typing import List, Tuple
 from openai import AsyncOpenAI
 from openai import APIConnectionError, APIError
-from extract_base import (
+from extractor_vlm import (
     SYSTEM_PROMPT, build_prompt, safe_parse_response, postprocess_triplets
 )
 
@@ -99,12 +99,15 @@ async def process_dataset_async(dataset_name: str, client: AsyncOpenAI, input_di
     with open(input_path, "r", encoding="utf-8") as f:
         texts = [line.strip() for line in f if line.strip()]
     
+    lim = int(os.getenv("LIM", "0") or "0")
+    if lim > 0:
+        texts = texts[:lim]
+    
     total_lines = len(texts)
     print(f"Total {total_lines} lines to process...")
     print(f"Batch size: {BATCH_SIZE} (concurrent requests)\n")
     
     stats = {'calls': 0, 'tokens': 0, 'time': 0.0, 'chars': 0}
-    total_time = time.time()
     
     with open(output_path, "w", encoding="utf-8") as fout:
         for batch_start in range(0, total_lines, BATCH_SIZE):
@@ -132,15 +135,12 @@ async def process_dataset_async(dataset_name: str, client: AsyncOpenAI, input_di
             progress = batch_end
             print(f"Progress: {progress}/{total_lines} ({progress/total_lines*100:.1f}%)")
     
-    total_time = time.time() - total_time
     
-
-
 
 async def main():
     import sys
     if len(sys.argv) < 4:
-        print("Usage: python extract_gpt.py <dataset_name> <input_dir> <output_dir>")
+        print("Usage: python extractor_gpt.py <dataset_name> <input_dir> <output_dir>")
         sys.exit(1)
     
     dataset_name = sys.argv[1]

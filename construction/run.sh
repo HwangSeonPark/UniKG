@@ -4,7 +4,7 @@
 if [ $# -lt 2 ]; then
     echo "Usage: bash run.sh <model_name> <dataset_name> [mine_articles_dir]"
     echo "  model_name: qwen, mistral, gpt, etc."
-    echo "  dataset_name: webnlg20, CaRB, KELM-sub, GenWiki, SCIERC, all, or mine"
+    echo "  dataset_name: webnlg20, carb-expert, kelm_sub, genwiki-hard, scierc, all, or mine"
     echo "  mine_articles_dir: (optional) path to mine dataset articles directory (required if dataset_name is mine)"
     exit 1
 fi
@@ -65,11 +65,13 @@ export VLLM_API_KEY="${VLLM_API_KEY:-none}"
 # Dataset mapping (case-insensitive)
 declare -A DSET_MAP
 DSET_MAP["webnlg20"]="webnlg20"
-DSET_MAP["carb"]="CaRB-Expert"
-DSET_MAP["CaRB"]="CaRB-Expert"
-DSET_MAP["KELM-sub"]="kelm_sub"
-DSET_MAP["GenWiki"]="GenWiki-Hard"
-DSET_MAP["SCIERC"]="SCIERC"
+DSET_MAP["carb"]="carb-expert"
+DSET_MAP["carb-expert"]="carb-expert"
+DSET_MAP["kelm_sub"]="kelm_sub"
+DSET_MAP["kelm-sub"]="kelm_sub"
+DSET_MAP["genwiki"]="genwiki-hard"
+DSET_MAP["genwiki-hard"]="genwiki-hard"
+DSET_MAP["scierc"]="scierc"
 
 # Determine if GPT model
 IS_GPT=false
@@ -95,8 +97,8 @@ get_articles_path() {
     else
         # Case-insensitive lookup
         local dset_lower=$(echo "$dset" | tr '[:upper:]' '[:lower:]')
-        local actual_dir="${DSET_MAP[$dset_lower]:-${DSET_MAP[$dset]:-$dset}}"
-        echo "$BASE_DIR/datasets/construction/$actual_dir/articles.txt"
+        local canon="${DSET_MAP[$dset_lower]:-$dset_lower}"
+        echo "$BASE_DIR/datasets/$canon/articles.txt"
     fi
 }
 
@@ -104,6 +106,7 @@ get_articles_path() {
 process_dataset() {
     local dset="$1"
     local articles_path=$(get_articles_path "$dset")
+    local dset2="$dset"
     
     echo "=========================================="
     echo "Processing dataset: $dset"
@@ -130,15 +133,17 @@ process_dataset() {
     echo "=========================================="
     if [ "$IS_GPT" = true ]; then
         if [ "$dset" == "mine" ]; then
-            python3 "$SCRIPT_DIR/extract_gpt.py" "$dset" "$INPUT_DIR" "$OUTPUT_DIR"
+            python3 "$SCRIPT_DIR/extractor_gpt.py" "$dset" "$INPUT_DIR" "$OUTPUT_DIR"
         else
-            python3 "$SCRIPT_DIR/extract_gpt.py" "$dset" "$articles_path" "$OUTPUT_DIR"
+            dset2=$(basename "$(dirname "$articles_path")")
+            python3 "$SCRIPT_DIR/extractor_gpt.py" "$dset2" "$articles_path" "$OUTPUT_DIR"
         fi
     else
         if [ "$dset" == "mine" ]; then
-            python3 "$SCRIPT_DIR/extract.py" "$mdl_nm" "$dset" "$INPUT_DIR" "$OUTPUT_DIR"
+            python3 "$SCRIPT_DIR/extractor.py" "$mdl_nm" "$dset" "$INPUT_DIR" "$OUTPUT_DIR"
         else
-            python3 "$SCRIPT_DIR/extract.py" "$mdl_nm" "$dset" "$articles_path" "$OUTPUT_DIR"
+            dset2=$(basename "$(dirname "$articles_path")")
+            python3 "$SCRIPT_DIR/extractor.py" "$mdl_nm" "$dset2" "$articles_path" "$OUTPUT_DIR"
         fi
     fi
     
@@ -147,7 +152,7 @@ process_dataset() {
         exit 1
     fi
     
-    # Step 3: Refine triples (always use qwen model)
+    # Step 3: Verify/refine triples (always use qwen model)
     echo ""
     echo "=========================================="
     echo "Step 3: Refine triples (using qwen model)"
@@ -155,11 +160,11 @@ process_dataset() {
     if [ "$dset" == "mine" ]; then
         python3 "$SCRIPT_DIR/run.py" "qwen" "$dset" "$INPUT_DIR" "$OUTPUT_DIR"
     else
-        python3 "$SCRIPT_DIR/run.py" "qwen" "$dset" "$articles_path" "$OUTPUT_DIR"
+        python3 "$SCRIPT_DIR/run.py" "qwen" "$dset2" "$articles_path" "$OUTPUT_DIR"
     fi
     
     if [ $? -ne 0 ]; then
-        echo "Error: refiner failed"
+        echo "Error: verifier failed"
         exit 1
     fi
     
@@ -188,8 +193,8 @@ process_dataset() {
         echo "Step 4: Save final triples"
         echo "=========================================="
         # For regular datasets, refined_triples.txt is the final triples.txt
-        cp "$OUTPUT_DIR/$dset/refined_triples.txt" "$OUTPUT_DIR/$dset/triples.txt"
-        echo "Saved triples to: $OUTPUT_DIR/$dset/triples.txt"
+        cp "$OUTPUT_DIR/$dset2/refined_triples.txt" "$OUTPUT_DIR/$dset2/triples.txt"
+        echo "Saved triples to: $OUTPUT_DIR/$dset2/triples.txt"
         
     fi
     
@@ -211,7 +216,7 @@ export PYTHONUNBUFFERED=1
 # Process datasets
 if [ "$dset_nm" == "all" ]; then
     # Process all datasets (excluding mine)
-    for dset in "webnlg20" "CaRB" "KELM-sub" "GenWiki" "SCIERC"; do
+    for dset in "webnlg20" "carb-expert" "kelm_sub" "genwiki-hard" "scierc"; do
         process_dataset "$dset"
     done
 elif [ "$dset_nm" == "mine" ]; then

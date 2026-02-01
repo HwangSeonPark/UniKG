@@ -5,7 +5,7 @@ from typing import Optional, Tuple
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_DATASET_DIR = PROJECT_ROOT / "evaluate" / "construction" / "references"
+DEFAULT_DATASET_DIR = PROJECT_ROOT / "evaluate" / "references"
 
 
 def _ensure_path(path: Path, label: str) -> Path:
@@ -30,11 +30,11 @@ def resolve_dataset_paths(
     require_gold: bool = True,
 ) -> Tuple[str, Optional[str], Optional[str]]:
     """
-    데이터셋 디렉터리와 개별 경로 인자를 조합해 실제 파일 경로를 반환한다.
-    - pred_path는 필수
-    - gold_path는 require_gold가 True면 필수, False면 선택 사항
-    - text_path는 require_text가 True면 필수, False면 선택 사항
-    - dataset_dir가 지정되면 상대 경로로 파일명만 지정 가능
+    Resolve actual file paths from a dataset directory and per-file arguments.
+    - pred_path is required
+    - gold_path is required when require_gold is True
+    - text_path is required when require_text is True
+    - if dataset_dir is provided, relative filenames are resolved from it
     """
 
     base = Path(dataset_dir).expanduser().resolve() if dataset_dir else None

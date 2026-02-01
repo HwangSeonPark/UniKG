@@ -50,7 +50,7 @@ if [ -z "$MODEL_NAME" ]; then
     echo "Alternatively, you can set environment variables:"
     echo "  BASE_DIR: Directory containing model prediction files"
     echo "  GOLDEN_DIR: Directory containing golden/ground truth files"
-    echo "  LOG_DIR: Directory for log files (default: evaluate/construction/logs)"
+    echo "  LOG_DIR: Directory for log files (default: evaluate/logs)"
     echo "  WORK_DIR: Working directory (default: current directory)"
     echo ""
     if [ -n "$DEFAULT_BASE_DIR" ] && [ -d "$DEFAULT_BASE_DIR" ]; then
@@ -75,7 +75,7 @@ cd "$WORK_DIR" || exit 1
 if [ -n "$DEFAULT_LOG_DIR" ]; then
     LOG_DIR="$DEFAULT_LOG_DIR"
 else
-    LOG_DIR="${WORK_DIR}/evaluate/construction/logs"
+    LOG_DIR="${WORK_DIR}/evaluate/logs"
 fi
 mkdir -p "$LOG_DIR"
 
@@ -108,15 +108,15 @@ METRICS="metrix"
 
 # Dataset mapping (for GOLD files)
 declare -A DS_MAP=(
-    ["GenWiki"]="GenWiki-Hard"
-    ["SCIERC"]="SCIERC"
-    ["KELM-sub"]="kelm_sub"
     ["webnlg20"]="webnlg20"
-    ["CaRB"]="CaRB-Expert"
+    ["genwiki-hard"]="genwiki-hard"
+    ["scierc"]="scierc"
+    ["kelm_sub"]="kelm_sub"
+    ["carb-expert"]="carb-expert"
 )
 
 # List of datasets to evaluate
-DATASETS=("CaRB")
+DATASETS=("carb-expert")
 
 echo ""
 echo "========================================================================"
@@ -163,17 +163,17 @@ for DS in "${DATASETS[@]}"; do
     echo "Log: ${LOG_FILE}"
     echo ""
     
-    python3 -m evaluate.construction.main \
+    python3 -m evaluate.main \
         --pred "$PRED" \
         --gold "$GOLD" \
         --models "$METRICS" \
         --log "$LOG_FILE"
     
     if [ $? -eq 0 ]; then
-        echo "✓ Completed: ${DS}"
+        echo "Completed: ${DS}"
         ((success_count++))
     else
-        echo "✗ Failed: ${DS}"
+        echo "Failed: ${DS}"
         ((fail_count++))
     fi
     echo ""
@@ -185,5 +185,5 @@ echo "Evaluation completed for model: ${MODEL_NAME}"
 echo "End time: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "========================================================================"
 echo "Success: ${success_count} | Failed: ${fail_count} | Skipped: ${skip_count}"
-echo "Result CSV: evaluate/construction/${MODEL_NAME}_result.csv"
+echo "Result CSV: evaluate/${MODEL_NAME}_result.csv"
 echo "========================================================================"

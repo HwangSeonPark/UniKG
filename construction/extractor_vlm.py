@@ -1,55 +1,24 @@
 """
 Common base module for triple extraction.
-Contains shared prompts and postprocessing functions used by both extract.py and extract_gpt.py
+Contains shared prompts and postprocessing functions used by both extractor.py and extractor_gpt.py
 """
 
 import re
 import ast
 from typing import List
 
-
-# =========================
-# PROMPTS
-# =========================
-FEW_SHOT_PROMPT = """
-Example 1:
-Text: The location of Trane is Swords, Dublin.
-Triplets: [['Trane', 'location', 'Swords, Dublin']]
+from pathlib import Path
 
 
-Example 2:
-Text: The Ciudad Ayala city, a part of Morelos with population density and population of 1604.0 and 1,777,539 respectively, has a UTC offset of -6. The government type of Ciudad Ayala is council-manager government and City Manager is one of the leaders.
-Triplets: [['Ciudad Ayala', 'population metro', '1777539'], ['Ciudad Ayala', 'leader title', '"City Manager"'], ['Ciudad Ayala', 'type', 'City'], ['Ciudad Ayala', 'population density', '1604.0'], ['Ciudad Ayala', 'government type', 'Council-manager government'], ['Ciudad Ayala', 'utc offset', '−6'], ['Ciudad Ayala', 'is part of', 'Morelos']]
+def read_txt(name: str) -> str:
+    """Read a UTF-8 prompt file from construction/prompts."""
+    pth = Path(__file__).resolve().parent / "prompts" / name
+    return pth.read_text(encoding="utf-8")
 
 
-
-Example 3:
-Text: The 17068.8 millimeter long ALCO RS-3 has a diesel-electric transmission.
-Triplets: [['ALCO RS-3', 'power type', 'Diesel-electric transmission'], ['ALCO RS-3', 'length', '17068.8 (millimetres)']]
-
-
-
-Example 4:
-Text: Alan B. Miller Hall, in Virginia, USA, was designed by Robert A.M. Stern. The address of the hall is "101 Ukrop Way" and the current tenants are the Mason School of Business.
-Triplets: [['Alan B. Miller Hall', 'architect', 'Robert A.M. Stern'], ['Alan B. Miller Hall', 'address', '"101 Ukrop Way"'], ['Alan B. Miller Hall', 'current tenants', 'Mason School of Business'], ['Alan B. Miller Hall', 'location', 'Virginia'], ['Mason School of Business', 'country', 'United States']]
-
-
-
-Example 5:
-Text: Liselotte Grschebina was born in Karlsruhe and died in Israel. Ethnic groups in Israel include Arabs.
-Triplets: [['Liselotte Grschebina', 'born in', 'Karlsruhe'], ['Liselotte Grschebina', 'died in', 'Israel'], ['Israel', 'ethnic group', 'Arab citizens of Israel']]
-
-
-
-Example 6:
-Text: Agremiação Sportiva Arapiraquense managed by Vica has 17000 members and play in the Campeonato Brasileiro Série C league which is from Brazil.
-Triplets: [['Agremiação Sportiva Arapiraquense', 'league', 'Campeonato Brasileiro Série C'], ['Campeonato Brasileiro Série C', 'country', 'Brazil'], ['Agremiação Sportiva Arapiraquense', 'number of members', '17000'], ['Agremiação Sportiva Arapiraquense', 'manager', 'Vica']]
-"""
-
-
+FEW_SHOT_PROMPT = read_txt("extator_fewshot.txt")
 SYSTEM_PROMPT = """You are an Open Information Extraction system.
 Extract factual triplets from the given text.
-
 
 Rules:
 - Extract ALL possible factual triplets stated in the text.
@@ -59,7 +28,6 @@ Rules:
 - Output only a Python list of [head, relation, tail].
 - Use spaces, not underscores, in all triple components.
 """
-
 
 # =========================
 # Postprocessing functions

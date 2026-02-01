@@ -5,8 +5,8 @@ from scipy.optimize import linear_sum_assignment
 from tqdm import tqdm
 from typing import Dict
 
-from evaluate.construction.common.graph.utils import split_to_edges
-from evaluate.construction.common.graph.io import load_lines_safe
+from evaluate.common.graph.utils import split_to_edges
+from evaluate.common.graph.io import load_lines_safe
 
 
 def _get_bert_score(all_gold_edges, all_pred_edges):

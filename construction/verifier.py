@@ -4,7 +4,7 @@ import ast
 import re
 from openai import OpenAI
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from refiner_base import TpRefBase
+from verifier_vlm import TpRefBase
 
 
 class TpRef(TpRefBase):
