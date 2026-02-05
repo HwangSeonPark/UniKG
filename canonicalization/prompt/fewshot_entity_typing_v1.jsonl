@@ -1,0 +1,23 @@
+{"text":"[HEAD] 1957 Moroccan Grand Prix [/HEAD] [REL] thirdTeam [/REL] [TAIL] British Racing Motors [/TAIL] [FOCUS] HEAD [/FOCUS]","label":"Event"}
+{"text":"[HEAD] 1957 Moroccan Grand Prix [/HEAD] [REL] thirdTeam [/REL] [TAIL] British Racing Motors [/TAIL] [FOCUS] TAIL [/FOCUS]","label":"Agent"}
+
+{"text":"[HEAD] Royal Fort House [/HEAD] [REL] engineer [/REL] [TAIL] Thomas Paty [/TAIL] [FOCUS] HEAD [/FOCUS]","label":"Artifact"}
+{"text":"[HEAD] Royal Fort House [/HEAD] [REL] engineer [/REL] [TAIL] Thomas Paty [/TAIL] [FOCUS] TAIL [/FOCUS]","label":"BiologicalEntity"}
+
+{"text":"[HEAD] Alekano language  Alekano  1 [/HEAD] [REL] spokenIn [/REL] [TAIL] Goroka District [/TAIL] [FOCUS] HEAD [/FOCUS]","label":"Work"}
+{"text":"[HEAD] Alekano language  Alekano  1 [/HEAD] [REL] spokenIn [/REL] [TAIL] Goroka District [/TAIL] [FOCUS] TAIL [/FOCUS]","label":"Place"}
+
+{"text":"[HEAD] Alan Shaw (footballer)  CareerStation  1 [/HEAD] [REL] occupation [/REL] [TAIL] Australian rules football [/TAIL] [FOCUS] HEAD [/FOCUS]","label":"TimePeriod"}
+{"text":"[HEAD] Alan Shaw (footballer)  CareerStation  1 [/HEAD] [REL] occupation [/REL] [TAIL] Australian rules football [/TAIL] [FOCUS] TAIL [/FOCUS]","label":"Event"}
+
+{"text":"[HEAD] Breakbeat [/HEAD] [REL] musicFusionGenre [/REL] [TAIL] Trip hop [/TAIL] [FOCUS] HEAD [/FOCUS]","label":"TopicalConcept"}
+{"text":"[HEAD] Breakbeat [/HEAD] [REL] musicFusionGenre [/REL] [TAIL] Trip hop [/TAIL] [FOCUS] TAIL [/FOCUS]","label":"Unknown"}
+
+{"text":"[HEAD] Ta-a mi [/HEAD] [REL] creatorOfDish [/REL] [TAIL] Taiwanese people [/TAIL] [FOCUS] HEAD [/FOCUS]","label":"Substance"}
+{"text":"[HEAD] Ta-a mi [/HEAD] [REL] creatorOfDish [/REL] [TAIL] Taiwanese people [/TAIL] [FOCUS] TAIL [/FOCUS]","label":"SocialEntity"}
+
+{"text":"[HEAD] Archbishop Williams High School [/HEAD] [REL] colour [/REL] [TAIL] Gold (color) [/TAIL] [FOCUS] HEAD [/FOCUS]","label":"Agent"}
+{"text":"[HEAD] Archbishop Williams High School [/HEAD] [REL] colour [/REL] [TAIL] Gold (color) [/TAIL] [FOCUS] TAIL [/FOCUS]","label":"Colour"}
+
+{"text":"[HEAD] Italy [/HEAD] [REL] topLevelDomain [/REL] [TAIL] .it [/TAIL] [FOCUS] HEAD [/FOCUS]","label":"Place"}
+{"text":"[HEAD] Italy [/HEAD] [REL] topLevelDomain [/REL] [TAIL] .it [/TAIL] [FOCUS] TAIL [/FOCUS]","label":"Identifier"}

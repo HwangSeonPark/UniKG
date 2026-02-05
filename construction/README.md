@@ -33,9 +33,8 @@ bash run.sh gpt mine /path/to/wikiqa/articles
 
 ## Model Support
 
-- **Non-GPT models**: Uses `extractor.py` for extraction (e.g., qwen, mistral)
-- **GPT models**: Uses `extractor_gpt.py` for extraction (e.g., gpt, gpt-5.1)
-- **Verification/refinement**: Always uses `run.py` with qwen model (regardless of extraction model)
+- **Extraction**: Uses `extractor.py` for both vLLM models (e.g., qwen, mistral) and OpenAI models (e.g., gpt, gpt-5.1)
+- **Verification/refinement**: Uses `run.py` (default: local refiner). If `REFINER_MODEL` starts with `gpt`, it will use OpenAI.
 
 ## Pipeline Steps
 
@@ -72,19 +71,19 @@ construction/
 ## Requirements
 
 - Python 3.x
-- Required Python packages: nltk, tiktoken (for split.py)
-- OpenAI API key (for GPT models) or vLLM server (for other models)
+- Required Python packages: nltk (for `split.py`), openai
+- OpenAI API key (for GPT models) or vLLM server (for non-GPT models)
 
 ## Notes
 
 - Articles longer than 2048 characters are automatically split at sentence boundaries
 - Split articles are merged back after processing to maintain original article count
 - All paths are passed as arguments - no hardcoded paths in Python files
-- Refinement step always uses qwen model regardless of extraction model
+- Refinement step defaults to local refiner; if `REFINER_MODEL` starts with `gpt`, it will use OpenAI
 
 ## Common Modules
 
-The codebase uses shared modules to reduce duplication:
+The codebase keeps the pipeline modules minimal:
 
-- `extractor_vlm.py`: Common prompts and postprocessing functions for extraction
-- `verifier_vlm.py`: Common refinement methods and prompt building
+- `extractor.py`: prompt + extraction + postprocessing
+- `verifier.py`: prompt building + refinement/extraction helpers

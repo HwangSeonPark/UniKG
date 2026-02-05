@@ -13,6 +13,12 @@ mdl_nm="$1"
 dset_nm="$2"
 MINE_ARTICLES_DIR="$3"
 
+# Determine if GPT model
+IS_GPT=false
+if [[ "$mdl_nm" == "gpt"* ]] || [[ "$mdl_nm" == "GPT"* ]]; then
+    IS_GPT=true
+fi
+
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -28,35 +34,50 @@ OUTPUT_DIR="$SCRIPT_DIR/output"
 # IMPORTANT: These environment variables must be set before running this script
 # Example: export QWEN_PORT=<port_number>
 export VLLM_HOST="${VLLM_HOST:-localhost}"
-if [ -z "$QWEN_PORT" ]; then
-    echo "Error: QWEN_PORT environment variable is not set. Please set it before running this script." >&2
-    echo "Example: export QWEN_PORT=<port_number>" >&2
-    exit 1
-fi
-export QWEN_PORT="$QWEN_PORT"
+if [ "$IS_GPT" != true ]; then
+    if [ -n "$QWEN_PORT" ]; then
+        export QWEN_PORT="$QWEN_PORT"
+    fi
 
-if [ -z "$MISTRAL_PORT" ]; then
-    echo "Error: MISTRAL_PORT environment variable is not set. Please set it before running this script." >&2
-    echo "Example: export MISTRAL_PORT=<port_number>" >&2
-    exit 1
-fi
-export MISTRAL_PORT="$MISTRAL_PORT"
+    if [ -n "$MISTRAL_PORT" ]; then
+        export MISTRAL_PORT="$MISTRAL_PORT"
+    fi
 
-export DEFAULT_VLLM_PORT="${DEFAULT_VLLM_PORT:-$QWEN_PORT}"
+    if [ -z "$DEFAULT_VLLM_PORT" ]; then
+        if [[ "$mdl_nm" == "mistral" ]] || [[ "$mdl_nm" == "MISTRAL" ]]; then
+            DEFAULT_VLLM_PORT="${MISTRAL_PORT:-$QWEN_PORT}"
+        else
+            DEFAULT_VLLM_PORT="${QWEN_PORT:-$MISTRAL_PORT}"
+        fi
+    fi
+
+    if [ -z "$DEFAULT_VLLM_PORT" ]; then
+        echo "Error: DEFAULT_VLLM_PORT is not set. Set DEFAULT_VLLM_PORT (or QWEN_PORT / MISTRAL_PORT) before running." >&2
+        exit 1
+    fi
+    export DEFAULT_VLLM_PORT="$DEFAULT_VLLM_PORT"
+fi
 
 # Refiner server port settings
 # IMPORTANT: These environment variables must be set before running this script
 # Example: export REFINER_PORT=<port_number>
 export REFINER_HOST="${REFINER_HOST:-localhost}"
-if [ -z "$REFINER_PORT" ]; then
-    echo "Error: REFINER_PORT environment variable is not set. Please set it before running this script." >&2
-    echo "Example: export REFINER_PORT=<port_number>" >&2
-    exit 1
+export REFINER_MODEL="${REFINER_MODEL:-Qwen/Qwen2.5-7B-Instruct}"
+IS_REF_GPT=false
+if [[ "$REFINER_MODEL" == "gpt"* ]] || [[ "$REFINER_MODEL" == "GPT"* ]]; then
+    IS_REF_GPT=true
 fi
-export REFINER_PORT="$REFINER_PORT"
+
+if [ "$IS_REF_GPT" != true ]; then
+    if [ -z "$REFINER_PORT" ]; then
+        echo "Error: REFINER_PORT environment variable is not set. Please set it before running this script." >&2
+        echo "Example: export REFINER_PORT=<port_number>" >&2
+        exit 1
+    fi
+    export REFINER_PORT="$REFINER_PORT"
+fi
 
 export REFINER_MAX_WORKERS="${REFINER_MAX_WORKERS:-10}"
-export REFINER_MODEL="${REFINER_MODEL:-Qwen/Qwen2.5-7B-Instruct}"
 export REFINER_MAX_TOKENS="${REFINER_MAX_TOKENS:-10000}"
 
 # vLLM API Key setting (optional)
@@ -72,12 +93,6 @@ DSET_MAP["kelm-sub"]="kelm_sub"
 DSET_MAP["genwiki"]="genwiki-hard"
 DSET_MAP["genwiki-hard"]="genwiki-hard"
 DSET_MAP["scierc"]="scierc"
-
-# Determine if GPT model
-IS_GPT=false
-if [[ "$mdl_nm" == "gpt"* ]] || [[ "$mdl_nm" == "GPT"* ]]; then
-    IS_GPT=true
-fi
 
 # Function to get original articles path
 get_articles_path() {
@@ -131,20 +146,11 @@ process_dataset() {
     echo "=========================================="
     echo "Step 2: Extract triples"
     echo "=========================================="
-    if [ "$IS_GPT" = true ]; then
-        if [ "$dset" == "mine" ]; then
-            python3 "$SCRIPT_DIR/extractor_gpt.py" "$dset" "$INPUT_DIR" "$OUTPUT_DIR"
-        else
-            dset2=$(basename "$(dirname "$articles_path")")
-            python3 "$SCRIPT_DIR/extractor_gpt.py" "$dset2" "$articles_path" "$OUTPUT_DIR"
-        fi
+    if [ "$dset" == "mine" ]; then
+        python3 "$SCRIPT_DIR/extractor.py" "$mdl_nm" "$dset" "$INPUT_DIR" "$OUTPUT_DIR"
     else
-        if [ "$dset" == "mine" ]; then
-            python3 "$SCRIPT_DIR/extractor.py" "$mdl_nm" "$dset" "$INPUT_DIR" "$OUTPUT_DIR"
-        else
-            dset2=$(basename "$(dirname "$articles_path")")
-            python3 "$SCRIPT_DIR/extractor.py" "$mdl_nm" "$dset2" "$articles_path" "$OUTPUT_DIR"
-        fi
+        dset2=$(basename "$(dirname "$articles_path")")
+        python3 "$SCRIPT_DIR/extractor.py" "$mdl_nm" "$dset2" "$articles_path" "$OUTPUT_DIR"
     fi
     
     if [ $? -ne 0 ]; then
