@@ -1,0 +1,19 @@
+{
+  "version": "v1",
+  "description": "Entity type ontology for KG triple tagging",
+  "labels": {
+    "Event": "Occurrences that unfold over time and whose identity depends on their temporal extent. Includes actions, events, pandemics, sports seasons, and competition results.",
+    "Agent": "Intentional actors capable of actions, such as organizations, or fictional characters.",
+    "Place": "Entities defined primarily by spatial location, such as geographic areas or regions.",
+    "Artifact": "Man-made physical objects whose identity is determined by design or function. Includes devices, means of transportation, and architectural structures.",
+    "BiologicalEntity": "Biologically grounded entities sharing biological identity criteria. Includes anatomical structures, biomolecules, species (humans, animals, plants), and diseases.",
+    "Substance": "Material entities defined by their composition. Includes food and chemical substances, regardless of processing.",
+    "SocialEntity": "Entities defined by social convention or collective agreement. Includes ethnic groups, medical specialties, and person functions.",
+    "Work": "Socially or institutionally recognized products or systems. Includes creative works, awards, languages, and currencies.",
+    "Colour": "A perceptual visual property resulting from the interaction of light with surfaces.",
+    "Identifier": "Abstract identifiers or naming units used for reference or measurement. Includes identifiers, names, and units of work.",
+    "TopicalConcept": "Abstract concepts or subject matters associated with a specific domain of knowledge.",
+    "TimePeriod": "Abstract temporal intervals or spans of time.",
+    "Unknown": "Used only when the entity type cannot be determined from the given context."
+  }
+}

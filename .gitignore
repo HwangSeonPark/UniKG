@@ -1,7 +1,7 @@
 /evaluate/dataset/
 /output/
-/1result/
 cache
+/temp
 *.csv
 
 # Python cache
@@ -11,10 +11,7 @@ __pycache__/
 *.so
 .Python
 *.log
-/datasets/kg-gen/kg-gen/view/summ.json
-/evaluate/construction/logs
-/evaluate/kg-gen/
-/experiments/MINE/
-/experiments/MINE/results/
-/experiments/MINE/results/
 *.zip
+/baseline
+*.env
+*.out
