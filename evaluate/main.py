@@ -199,7 +199,7 @@ def _extr_ds_model(pred_path: str, gold_path: Optional[str]) -> tuple[str, str]:
     dsmap = {
         "genwiki-hard": "genwiki-hard",
         "carb-expert": "carb-expert",
-        "kelm_sub": "kelm_sub",
+        "kelm-sub": "kelm-sub",
         "scierc": "scierc",
         "webnlg20": "webnlg20",
     }

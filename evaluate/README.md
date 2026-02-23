@@ -18,7 +18,7 @@ EXTRACT_DIR/
 │   └── triples.txt
 ├── carb-expert/
 │   └── triples.txt
-├── kelm_sub/
+├── kelm-sub/
 │   └── triples.txt
 ├── scierc/
 │   └── triples.txt
@@ -92,7 +92,7 @@ The dataset mapping in the script is configured as follows:
 |---------------------------|----------------------|
 | `genwiki-hard` | `genwiki-hard` |
 | `carb-expert` | `carb-expert` |
-| `kelm_sub` | `kelm_sub` |
+| `kelm-sub` | `kelm-sub` |
 | `scierc` | `scierc` |
 | `webnlg20` | `webnlg20` |
 
@@ -109,7 +109,7 @@ The script will automatically run Metrix evaluation for each dataset and save re
 
 ---
 
-## 🔧 Direct Execution
+## Direct Execution
 
 To run evaluation on individual files:
 
@@ -159,7 +159,7 @@ If `--dataset` is specified, you can use relative paths for file names.
 
 ---
 
-##  Dataset Requirements
+## Dataset Requirements
 
 ### File Format
 
@@ -169,17 +169,17 @@ If `--dataset` is specified, you can use relative paths for file names.
 ### Important Notes
 
 - **Line Count Match**: The line counts of `pred.txt` and `gold.txt` must match. If they differ, evaluation will produce errors.
--  **Triple Format**: Each triple should be in the format `"entity1 | relation | entity2"` within a Python list string.
+- **Triple Format**: Each line is a Python list of `[subject, relation, object]` triples.
 
 ### Example File Format
 
 ```
-["entity1 | relation1 | entity2"]
-["entity3 | relation2 | entity4", "entity5 | relation3 | entity6"]
-["entity7 | relation4 | entity8"]
+[["entity1", "relation1", "entity2"]]
+[["entity3", "relation2", "entity4"], ["entity5", "relation3", "entity6"]]
+[["entity7", "relation4", "entity8"]]
 ```
 
-Each line is a Python list string containing one or more triples separated by ` | `.
+Each line is a Python list of triples, where each triple is a 3-element list `[subject, relation, object]`.
 
 ---
 

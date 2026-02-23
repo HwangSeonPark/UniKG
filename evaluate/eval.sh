@@ -66,7 +66,7 @@ if [ -n "$DEFAULT_WORK_DIR" ]; then
 else
     # Try to detect KGC root directory
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    WORK_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+    WORK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 fi
 
 cd "$WORK_DIR" || exit 1
@@ -111,12 +111,12 @@ declare -A DS_MAP=(
     ["webnlg20"]="webnlg20"
     ["genwiki-hard"]="genwiki-hard"
     ["scierc"]="scierc"
-    ["kelm_sub"]="kelm_sub"
+    ["kelm-sub"]="kelm-sub"
     ["carb-expert"]="carb-expert"
 )
 
 # List of datasets to evaluate
-DATASETS=("carb-expert")
+DATASETS=("kelm-sub" "scierc")
 
 echo ""
 echo "========================================================================"

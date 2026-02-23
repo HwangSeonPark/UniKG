@@ -1,0 +1,63 @@
+
+Start time: 2026-02-22 14:25:34
+Log file: /home/hyyang/my_workspace/KGC/evaluate/logs/EDC_scierc_result
+================================================================================
+[14:25:34] [0.00s] ================================================================================
+[14:25:34] [0.00s] Metrix Evaluation Suite
+[14:25:34] [0.00s] Pred file: evaluate/dataset/EDC/scierc/triples.txt
+[14:25:34] [0.00s] Gold file: datasets/scierc/triples.txt
+[14:25:34] [0.00s] Evaluation metrics: Metrix
+[14:25:34] [0.00s] ================================================================================
+
+[14:25:34] [0.00s] >> Metrix evaluation: start
+[14:25:40] [6.25s] [G-BLEU] Evaluating 100 samples
+[14:25:40] [6.25s] [G-BLEU] Sample 1/100 (1%) | Elapsed: 0.0s | Remaining: 0.0s
+[14:25:40] [6.39s] [G-BLEU] Sample 2/100 (2%) | Elapsed: 0.1s | Remaining: 7.1s
+[14:25:41] [6.52s] [G-BLEU] Sample 3/100 (3%) | Elapsed: 0.3s | Remaining: 8.9s
+[14:25:41] [6.64s] [G-BLEU] Sample 6/100 (6%) | Elapsed: 0.4s | Remaining: 6.1s
+[14:25:41] [7.00s] [G-BLEU] Sample 11/100 (11%) | Elapsed: 0.8s | Remaining: 6.1s
+[14:25:41] [7.37s] [G-BLEU] Sample 16/100 (16%) | Elapsed: 1.1s | Remaining: 5.9s
+[14:25:42] [7.59s] [G-BLEU] Sample 21/100 (21%) | Elapsed: 1.3s | Remaining: 5.1s
+[14:25:42] [7.71s] [G-BLEU] Sample 26/100 (26%) | Elapsed: 1.5s | Remaining: 4.1s
+[14:25:42] [7.90s] [G-BLEU] Sample 31/100 (31%) | Elapsed: 1.7s | Remaining: 3.7s
+[14:25:42] [8.26s] [G-BLEU] Sample 36/100 (36%) | Elapsed: 2.0s | Remaining: 3.6s
+[14:25:43] [8.80s] [G-BLEU] Sample 41/100 (41%) | Elapsed: 2.6s | Remaining: 3.7s
+[14:25:43] [9.05s] [G-BLEU] Sample 46/100 (46%) | Elapsed: 2.8s | Remaining: 3.3s
+[14:25:43] [9.35s] [G-BLEU] Sample 51/100 (51%) | Elapsed: 3.1s | Remaining: 3.0s
+[14:25:44] [9.54s] [G-BLEU] Sample 56/100 (56%) | Elapsed: 3.3s | Remaining: 2.6s
+[14:25:44] [9.78s] [G-BLEU] Sample 61/100 (61%) | Elapsed: 3.5s | Remaining: 2.3s
+[14:25:45] [10.43s] [G-BLEU] Sample 66/100 (66%) | Elapsed: 4.2s | Remaining: 2.2s
+[14:25:45] [10.66s] [G-BLEU] Sample 71/100 (71%) | Elapsed: 4.4s | Remaining: 1.8s
+[14:25:45] [10.88s] [G-BLEU] Sample 76/100 (76%) | Elapsed: 4.6s | Remaining: 1.5s
+[14:25:45] [11.08s] [G-BLEU] Sample 81/100 (81%) | Elapsed: 4.8s | Remaining: 1.1s
+[14:25:46] [11.42s] [G-BLEU] Sample 86/100 (86%) | Elapsed: 5.2s | Remaining: 0.8s
+[14:25:46] [11.96s] [G-BLEU] Sample 91/100 (91%) | Elapsed: 5.7s | Remaining: 0.6s
+[14:25:46] [12.19s] [G-BLEU] Sample 96/100 (96%) | Elapsed: 5.9s | Remaining: 0.2s
+[14:27:15] [100.68s]   G-BLEU:
+[14:27:15] [100.68s]     precision: 0.3704
+[14:27:15] [100.68s]     recall: 0.5917
+[14:27:15] [100.68s]     f1: 0.4335
+[14:27:15] [100.68s]   G-ROUGE:
+[14:27:15] [100.68s]     precision: 0.3440
+[14:27:15] [100.68s]     recall: 0.5569
+[14:27:15] [100.68s]     f1: 0.4036
+[14:27:15] [100.68s]   G-BERTScore:
+[14:27:15] [100.68s]     precision: 0.5743
+[14:27:15] [100.68s]     recall: 0.9053
+[14:27:15] [100.68s]     f1: 0.6684
+[14:27:15] [100.68s] << Metrix evaluation completed (duration: 100.68s): completed
+[14:27:15] [100.68s] 
+========================================================================================================================
+[14:27:15] [100.68s] Final Results Table
+[14:27:15] [100.68s] ========================================================================================================================
+[14:27:15] [100.68s] G-BERTScore (Accuracy)	G-BERTScore (Recall)	G-BERTScore (F1)	G-BLEU (Accuracy)	G-BLEU (Recall)	G-BLEU (F1)	G-ROUGE (Accuracy)	G-ROUGE (Recall)	G-ROUGE (F1)
+[14:27:15] [100.68s] ------------------------------------------------------------------------------------------------------------------------
+[14:27:15] [100.68s] 0.5743	0.9053	0.6684	0.3704	0.5917	0.4335	0.3440	0.5569	0.4036
+[14:27:15] [100.68s] ========================================================================================================================
+[14:27:15] [100.68s] CSV saved: evaluate/EDC_result.csv (scierc, EDC)
+
+================================================================================
+Evaluation completed
+Total duration: 100.68s (1.68min)
+End time: 2026-02-22 14:27:15
+================================================================================

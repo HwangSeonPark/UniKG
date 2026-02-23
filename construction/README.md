@@ -2,6 +2,29 @@
 
 This pipeline processes knowledge graph triple extraction and verification/refinement from articles.
 
+## Start vLLM server (for vLLM models)
+
+If you use vLLM-based models (e.g., qwen, mistral), start the vLLM OpenAI-compatible server **before** running this pipeline:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 nohup python3 -m vllm.entrypoints.openai.api_server \
+  --model Qwen/Qwen2.5-7B-Instruct \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --dtype float16 \
+  --gpu-memory-utilization 0.7 \
+  --max-model-len 30000 > vllm_server.log 2>&1 &
+```
+
+## Environment Setup
+
+Create a `.env` file in the KGC root directory:
+
+```
+OPENAI_API_KEY=sk-...        # Required for GPT models
+port=8000                    # Required for vLLM models (qwen, mistral)
+```
+
 ## Usage
 
 ```bash
@@ -34,56 +57,38 @@ bash run.sh gpt mine /path/to/wikiqa/articles
 ## Model Support
 
 - **Extraction**: Uses `extractor.py` for both vLLM models (e.g., qwen, mistral) and OpenAI models (e.g., gpt, gpt-5.1)
-- **Verification/refinement**: Uses `run.py` (default: local refiner). If `REFINER_MODEL` starts with `gpt`, it will use OpenAI.
+- **Verification/refinement**: Uses `run.py` with the same model family as extraction. GPT extraction uses GPT for refinement; vLLM extraction uses the vLLM refiner.
 
 ## Pipeline Steps
 
 1. **Split Articles**: If articles exceed 2048 characters, split them at sentence boundaries
 2. **Extract Triples**: Extract knowledge graph triples from articles using specified model
-3. **Verify/Refine Triples**: Verify/refine extracted triples using qwen model (always)
-4. **Merge Triples**: Merge split triples back to original article count
-5. **Cleanup**: Remove temporary split article files
-
-## Output Structure
-
-```
-construction/
-├── input/              # Temporary split articles
-│   ├── articles.txt    # All split articles (one per line)
-│   └── mapping.json    # Mapping from original to split indices
-└── output/
-    └── {dataset_name}/
-        ├── extract_triples.txt  # Extracted triples
-        ├── refined_triples.txt  # Refined triples
-        └── triples.txt          # Final merged triples
-```
+3. **Verify/Refine Triples**: Verify/refine extracted triples using the same model family as extraction (GPT or vLLM)
+4. **Merge Triples**: Merge split triples back to original article count (with deduplication)
 
 ## Dataset Names
 
 - `webnlg20`
 - `carb-expert`
-- `kelm_sub`
+- `kelm-sub`
 - `genwiki-hard`
 - `scierc`
 - `mine` (requires articles directory path as 3rd argument or `MINE_ARTICLES_PATH` environment variable)
 - `all` (processes all datasets except mine)
-
-## Requirements
-
-- Python 3.x
-- Required Python packages: nltk (for `split.py`), openai
-- OpenAI API key (for GPT models) or vLLM server (for non-GPT models)
 
 ## Notes
 
 - Articles longer than 2048 characters are automatically split at sentence boundaries
 - Split articles are merged back after processing to maintain original article count
 - All paths are passed as arguments - no hardcoded paths in Python files
-- Refinement step defaults to local refiner; if `REFINER_MODEL` starts with `gpt`, it will use OpenAI
+- Refinement step uses the same model family as the extraction step (auto-detected from model name)
+
 
 ## Common Modules
 
 The codebase keeps the pipeline modules minimal:
 
-- `extractor.py`: prompt + extraction + postprocessing
-- `verifier.py`: prompt building + refinement/extraction helpers
+- `extractor.py`: prompt loading + extraction + postprocessing
+- `verifier.py`: prompt loading + refinement/extraction helpers
+- `utils/split.py`: article splitting
+- `utils/merge_triples.py`: triple merging with deduplication

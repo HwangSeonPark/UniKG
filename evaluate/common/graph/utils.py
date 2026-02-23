@@ -6,9 +6,7 @@ from typing import List, Tuple
 
 
 def modify_graph(original_graph):
-	"""
-	트리플의 각 토큰을 소문자/공백 정리
-	"""
+	"""Normalize each token in triples to lowercase with whitespace cleanup."""
 	modified_graph = []
 	for x in original_graph:
 		modified_graph.append([str(t).lower().strip() for t in x])
@@ -44,16 +42,10 @@ def split_to_edges(graphs):
 
 
 def return_eq_node(node1, node2):
-	"""
-	노드 동치 판단(라벨 기준)
-	"""
 	return node1['label'] == node2['label']
 
 
 def return_eq_edge(edge1, edge2):
-	"""
-	엣지 동치 판단(라벨 기준)
-	"""
 	return edge1['label'] == edge2['label']
 
 

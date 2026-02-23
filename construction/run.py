@@ -1,5 +1,7 @@
 import os
 import sys
+import json
+import time
 from verifier import TpRef
 
 
@@ -11,7 +13,7 @@ DEFAULT_MAX_TOKENS = os.getenv("REFINER_MAX_TOKENS")
 DEFAULT_HOST = os.getenv("REFINER_HOST", "localhost")
 
 def dedup_row(row, canon):
-    """Deduplicate triples within a row (case-insensitive) and reuse canonical casing across rows."""
+    # Deduplicate triples within a row (case-insensitive) and reuse canonical casing across rows
     if not row or not isinstance(row, list):
         return []
     seen = set()
@@ -51,11 +53,11 @@ def main():
     gpt = mdl_l.startswith("gpt") or mod_l.startswith("gpt")
     if gpt:
         if mdl_l.startswith("gpt"):
-            model = os.getenv("OPENAI_MODEL", "gpt-5.1") if mdl_l == "gpt" else mdl_nm
+            model = "gpt-5.1" if mdl_l == "gpt" else mdl_nm
         else:
             model = DEFAULT_MODEL
             if str(model).lower() == "gpt":
-                model = os.getenv("OPENAI_MODEL", "gpt-5.1")
+                model = "gpt-5.1"
         ref = TpRef(max_workers=mw, model=model, max_tokens=mt)
     else:
         if not DEFAULT_PORT:
@@ -100,12 +102,46 @@ def main():
     refined_p = os.path.join(out_dir, "refined_triples.txt")
     
     # Process and save refined triples
+    t0 = time.time()
     outs = ref.proc_batch(txts, preds)
+    vtsc = time.time() - t0
     canon = {}
-    
+
     with open(refined_p, 'w', encoding='utf-8') as f:
         for tps in outs:
             f.write(str(dedup_row(tps, canon)) + '\n')
+
+    # Read extractor stats
+    exst = {}
+    esf = os.path.join(out_dir, "extract_stats.json")
+    if os.path.exists(esf):
+        with open(esf, encoding="utf-8") as f:
+            exst = json.load(f)
+        os.remove(esf)
+
+    # Save structured stats
+    tchr = exst.get("tchr", sum(len(t) for t in txts))
+    ncll = exst.get("ncll", 0) + ref.ncll
+    titk = exst.get("titk", 0) + ref.titk
+    totk = exst.get("totk", 0) + ref.totk
+    tsec = exst.get("tsec", 0.0) + vtsc
+
+    stats = {
+        "extract": {"ncll": exst.get("ncll", 0), "titk": exst.get("titk", 0), "totk": exst.get("totk", 0), "tsec": exst.get("tsec", 0.0)},
+        "verify":  {"ncll": ref.ncll, "titk": ref.titk, "totk": ref.totk, "tsec": vtsc},
+        "total":   {"ncll": ncll, "titk": titk, "totk": totk, "tchr": tchr, "tsec": tsec},
+    }
+    with open(os.path.join(out_dir, "stats.json"), "w", encoding="utf-8") as f:
+        json.dump(stats, f, indent=2)
+
+    print(f"\n{'='*50}")
+    print("[Stats Summary]")
+    print(f"  Total LLM Calls        : {ncll}")
+    print(f"  Total Time (s)         : {tsec:.2f}")
+    if tchr > 0:
+        print(f"  Input  Tokens / 1k chars : {titk / tchr * 1000:.2f}")
+        print(f"  Output Tokens / 1k chars : {totk / tchr * 1000:.2f}")
+    print(f"{'='*50}")
 
 if __name__ == "__main__":
     main()
