@@ -53,7 +53,7 @@ if [ "$IS_REF_GPT" != true ]; then
 fi
 
 export REFINER_MAX_WORKERS="${REFINER_MAX_WORKERS:-10}"
-export REFINER_MAX_TOKENS="${REFINER_MAX_TOKENS:-4096}"
+export REFINER_MAX_TOKENS="${REFINER_MAX_TOKENS:-10000}"
 export VLLM_API_KEY="${VLLM_API_KEY:-none}"
 
 declare -A DSET_MAP
@@ -135,8 +135,6 @@ process_dataset() {
         rm -f "$INPUT_DIR"/article_*.txt
         rm -f "$INPUT_DIR"/articles.txt
     else
-        echo "Step 4: Save final triples"
-        cp "$OUTPUT_DIR/$dset2/refined_triples.txt" "$OUTPUT_DIR/$dset2/triples.txt"
         echo "Saved triples to: $OUTPUT_DIR/$dset2/triples.txt"
     fi
 

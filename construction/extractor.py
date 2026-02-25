@@ -224,19 +224,14 @@ async def extract_triplets_with_index(
 
     for attempt in range(max_retries):
         try:
-            estimated_timeout = max(60, min(600, (text_len / 1000) * 100))
-
-            response = await asyncio.wait_for(
-                client.chat.completions.create(
-                    model=model_name,
-                    temperature=0.0,
-                    messages=[
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user", "content": build_prompt(text)},
-                    ],
-                    **tkw
-                ),
-                timeout=estimated_timeout + 30
+            response = await client.chat.completions.create(
+                model=model_name,
+                temperature=0.0,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": build_prompt(text)},
+                ],
+                **tkw
             )
 
             raw_content = response.choices[0].message.content.strip()
@@ -245,13 +240,6 @@ async def extract_triplets_with_index(
             itk = response.usage.prompt_tokens if response.usage else 0
             otk = response.usage.completion_tokens if response.usage else 0
             return (index, triplets, itk, otk, 1)
-
-        except asyncio.TimeoutError:
-            if attempt < max_retries - 1:
-                await asyncio.sleep(RETRY_DELAY)
-            else:
-                print(f"[Error] Index {index}: request timeout", flush=True)
-                return (index, [], 0, 0, 0)
 
         except APIConnectionError:
             if attempt < max_retries - 1:

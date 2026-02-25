@@ -98,16 +98,14 @@ def main():
     out_dir = os.path.join(output_dir, dset_nm)
     os.makedirs(out_dir, exist_ok=True)
     
-    # Output file for refined triples
-    refined_p = os.path.join(out_dir, "refined_triples.txt")
-    
-    # Process and save refined triples
+    triples_p = os.path.join(out_dir, "triples.txt")
+
     t0 = time.time()
     outs = ref.proc_batch(txts, preds)
     vtsc = time.time() - t0
     canon = {}
 
-    with open(refined_p, 'w', encoding='utf-8') as f:
+    with open(triples_p, 'w', encoding='utf-8') as f:
         for tps in outs:
             f.write(str(dedup_row(tps, canon)) + '\n')
 

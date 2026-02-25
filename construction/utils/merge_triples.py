@@ -28,14 +28,13 @@ def dedup_row(row, canon):
 
 
 def merge_triples(input_dir: str, output_dir: str, dataset_name: str):
-    refined_file = os.path.join(output_dir, dataset_name, "refined_triples.txt")
-    output_file = os.path.join(output_dir, dataset_name, "triples.txt")
+    triples_file = os.path.join(output_dir, dataset_name, "triples.txt")
 
-    if not os.path.exists(refined_file):
-        print(f"Error: {refined_file} not found")
+    if not os.path.exists(triples_file):
+        print(f"Error: {triples_file} not found")
         return
 
-    with open(refined_file, 'r', encoding='utf-8') as f:
+    with open(triples_file, 'r', encoding='utf-8') as f:
         refined_lines = [l.strip() for l in f.readlines()]
 
     article_mapping_file = os.path.join(input_dir, "article_mapping.json")

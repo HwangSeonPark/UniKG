@@ -116,7 +116,7 @@ declare -A DS_MAP=(
 )
 
 # List of datasets to evaluate
-DATASETS=("kelm-sub" "scierc")
+DATASETS=("webnlg20" "genwiki-hard" "carb-expert" "kelm-sub" "scierc")
 
 echo ""
 echo "========================================================================"

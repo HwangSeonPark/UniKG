@@ -1,6 +1,39 @@
+
 # Construction Pipeline
 
 This pipeline processes knowledge graph triple extraction and verification/refinement from articles.
+
+```
+
+## Environment Setup
+
+First, create and activate the conda environment in the KGC root directory:
+
+```bash
+conda create -n unikg python=3.10.12
+conda activate unikg
+```
+
+Then, install all required packages from the root directory:
+
+```bash
+pip install -r requirements.txt
+```
+
+After the installation is complete, move to the `construction` directory to run the pipeline:
+
+```bash
+cd construction
+```
+
+Create a `.env` file in the KGC root directory:
+
+```text
+OPENAI_API_KEY=sk-...        # Required for GPT models
+port=8000                    # Required for vLLM models (qwen, mistral)
+```
+
+
 
 ## Start vLLM server (for vLLM models)
 
@@ -10,20 +43,10 @@ If you use vLLM-based models (e.g., qwen, mistral), start the vLLM OpenAI-compat
 CUDA_VISIBLE_DEVICES=0 nohup python3 -m vllm.entrypoints.openai.api_server \
   --model Qwen/Qwen2.5-7B-Instruct \
   --host 0.0.0.0 \
-  --port 8000 \
+  --port 3906 \
   --dtype float16 \
   --gpu-memory-utilization 0.7 \
   --max-model-len 30000 > vllm_server.log 2>&1 &
-```
-
-## Environment Setup
-
-Create a `.env` file in the KGC root directory:
-
-```
-OPENAI_API_KEY=sk-...        # Required for GPT models
-port=8000                    # Required for vLLM models (qwen, mistral)
-```
 
 ## Usage
 

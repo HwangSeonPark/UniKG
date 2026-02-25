@@ -58,7 +58,7 @@ bash eval.sh <model_name> \
 
 **Example:**
 ```bash
-bash eval.sh KGGEN_c \
+bash eval.sh unikg \
   --base-dir /home/user/KGC/predictions \
   --golden-dir /home/user/KGC/datasets \
   --log-dir /home/user/KGC/evaluate/logs
@@ -100,10 +100,30 @@ You can modify the `DS_MAP` array in `eval.sh` if needed.
 
 ### 4. Running the Evaluation
 
+> **Important**: Run from the **project root** (`KGC/`), not from the `evaluate/` directory.
+
 ```bash
-cd /path/to/KGC/evaluate
-bash eval.sh <model_name> --base-dir <base_dir> --golden-dir <golden_dir>
+cd /path/to/KGC
+bash evaluate/eval.sh <model_name> --base-dir <base_dir> --golden-dir <golden_dir>
 ```
+
+The PRED and GOLD paths are resolved as follows:
+
+- **PRED**: `<base_dir>/<model_name>/<dataset>/triples.txt`
+- **GOLD**: `<golden_dir>/<dataset>/triples.txt`
+
+**Example** (evaluating unikg predictions against ground truth):
+
+```bash
+cd /home/user/KGC
+bash evaluate/eval.sh unikg \
+  --base-dir /home/user/KGC/evaluate/dataset \
+  --golden-dir /home/user/KGC/datasets
+```
+
+This resolves to:
+- PRED: `evaluate/dataset/unikg/webnlg20/triples.txt`
+- GOLD: `datasets/webnlg20/triples.txt`
 
 The script will automatically run Metrix evaluation for each dataset and save results to log files.
 
@@ -129,6 +149,11 @@ python3 -m evaluate.main \
 |----------|----------|-------------|
 | `--pred` | ✅ | Path to predicted triples file |
 | `--gold` | ✅ | Path to gold triples file |
+| `--models` | | Evaluation metrics to run (default: `metrix`) |
+| `--log` | | Path to log file |
+| `--analyze-errors` | | Perform error analysis and save to CSV |
+| `--error-output-dir` | | Directory to save error analysis results (default: `evaluate/error_analysis`) |
+
 ### Metrix Metrics
 
 Metrix evaluates knowledge graphs using three metrics:
