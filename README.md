@@ -14,7 +14,7 @@ Then it will render here:
 
 ## Quick Start
 
-From the project root (`/home/hspark/UniKG`):
+From the project root (`/home/UniKG`):
 
 ```bash
 # (Recommended) create env
