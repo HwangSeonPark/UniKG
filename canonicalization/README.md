@@ -23,6 +23,7 @@ bash run.sh [gpt|qwen|mistral] [dataset] [api_base]
 ### GPT
 
 export OPENAI_API_KEY=sk-xxxx
+
 bash run.sh gpt CaRB
 
 ### Qwen (vLLM)
