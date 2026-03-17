@@ -2,8 +2,8 @@ from openai import OpenAI
 
 MODEL_MAP = {
     "gpt": "gpt-5.1-2025-11-13",
-    "qwen": "Qwen2.5-7B-Instruct",
-    "mistral": "Mistral-7B-Instruct-v0.3",
+    "qwen": "Qwen/Qwen2.5-7B-Instruct",
+    "mistral": "mistralai/Mistral-7B-Instruct-v0.3",
 }
 
 def get_client(api_base=None):
