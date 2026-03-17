@@ -2,7 +2,7 @@ import json
 from sentence_transformers import SentenceTransformer
 
 def step5(input_path, output_path):
-    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", device="cpu")
 
     entity_cache = {}
     relation_cache = {}
