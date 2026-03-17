@@ -18,7 +18,7 @@ canonicalization/work/{dataset}/*
 
 ## Usage
 
-bash run.sh <gpt|qwen|mistral>  <dataset>  [api_base]
+bash run.sh <gpt|qwen|mistral> <dataset> [api_base]
 
 ### GPT
 
