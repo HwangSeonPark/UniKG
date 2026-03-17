@@ -54,7 +54,3 @@ bash run.sh mistral CaRB http://localhost:8001/v1
 
 canonicalization/prompt/entity_types_v1.json  
 canonicalization/prompt/fewshot_entity_typing_v1.jsonl
-
-## Requirements
-
-pip install openai sentence-transformers rank_bm25 scikit-learn
