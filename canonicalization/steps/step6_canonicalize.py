@@ -106,7 +106,7 @@ If duplicates is non-empty, canonical MUST be one of [Item or Candidates].
 
             if dups and canon:
                 cluster = set([a] + dups)
-                entity_clusters[canon] = cluster
+                entity_clusters[(etype, canon)] = cluster
                 for x in cluster:
                     remaining.pop(x, None)
             else:
@@ -129,19 +129,37 @@ If duplicates is non-empty, canonical MUST be one of [Item or Candidates].
 
             if dups and canon:
                 cluster = set([a] + dups)
-                edge_clusters[canon] = cluster
+                edge_clusters[(key, canon)] = cluster
                 for x in cluster:
                     remaining.pop(x, None)
             else:
                 remaining.pop(a)
 
-    entity_map = {alias: canon for canon, aliases in entity_clusters.items() for alias in aliases}
-    relation_map = {alias: canon for canon, aliases in edge_clusters.items() for alias in aliases}
+    entity_map = {
+    (etype, alias): canon
+    for (etype, canon), aliases in entity_clusters.items()
+    for alias in aliases
+    }
+    
+    relation_map = {
+    (key, alias): canon
+    for (key, canon), aliases in edge_clusters.items()
+    for alias in aliases
+    }
 
     for row in data:
-        row["head"]["text"] = entity_map.get(row["head"]["text"], row["head"]["text"])
-        row["tail"]["text"] = entity_map.get(row["tail"]["text"], row["tail"]["text"])
-        row["relation"] = relation_map.get(row["relation"], row["relation"])
+    h, t = row["head"], row["tail"]
+    key = (h["type"], t["type"])
+
+    h["text"] = entity_map.get(
+        (h["type"], h["text"]), h["text"]
+    )
+    t["text"] = entity_map.get(
+        (t["type"], t["text"]), t["text"]
+    )
+    row["relation"] = relation_map.get(
+        (key, row["relation"]), row["relation"]
+    )
 
     with open(out_path, "w", encoding="utf-8") as f:
         for row in data:
