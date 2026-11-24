@@ -40,13 +40,13 @@ def g_rouge(pred_path: str, gold_path: str) -> dict:
 	f1s_rouge = []
 
 	for i in range(len(gold_tokens)):
-		# rouge2 precision 기반 점수 행렬
+		# rouge2 recall 기반 점수 행렬
 		score_rouge = np.zeros((len(pred_tokens[i]), len(gold_tokens[i])))
 		for p_idx in range(len(pred_tokens[i])):
 			for g_idx in range(len(gold_tokens[i])):
 				score_rouge[p_idx, g_idx] = scorer_rouge.score(
 					gold_edges[i][g_idx], pred_edges[i][p_idx]
-				)['rouge2'].precision
+				)['rouge2'].recall
 		p, r, f = _scores(score_rouge)
 		precisions_rouge.append(p)
 		recalls_rouge.append(r)
