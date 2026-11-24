@@ -148,18 +148,18 @@ If duplicates is non-empty, canonical MUST be one of [Item or Candidates].
     }
 
     for row in data:
-    h, t = row["head"], row["tail"]
-    key = (h["type"], t["type"])
-
-    h["text"] = entity_map.get(
-        (h["type"], h["text"]), h["text"]
-    )
-    t["text"] = entity_map.get(
-        (t["type"], t["text"]), t["text"]
-    )
-    row["relation"] = relation_map.get(
-        (key, row["relation"]), row["relation"]
-    )
+        h, t = row["head"], row["tail"]
+        key = (h["type"], t["type"])
+    
+        h["text"] = entity_map.get(
+            (h["type"], h["text"]), h["text"]
+        )
+        t["text"] = entity_map.get(
+            (t["type"], t["text"]), t["text"]
+        )
+        row["relation"] = relation_map.get(
+            (key, row["relation"]), row["relation"]
+        )
 
     with open(out_path, "w", encoding="utf-8") as f:
         for row in data:
